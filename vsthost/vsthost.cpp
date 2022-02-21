@@ -269,65 +269,65 @@ INT_PTR CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     AEffect* effect;
     switch (uMsg)
     {
-    case WM_INITDIALOG:
-    {
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
-        SetWindowText(hwnd, L"VST Host");
-        SetTimer(hwnd, 1, 20, 0);
-        effect = (AEffect*)lParam;
-        if (effect)
+        case WM_INITDIALOG:
         {
-            char product[VstStringConstants::kVstMaxProductStrLen] = { 0 };
-            effect->dispatcher(effect, effGetProductString, 0, 0, &product, 0);
-
-            SetWindowTextA(hwnd, (LPCSTR)product);
-
-            effect->dispatcher(effect, AEffectOpcodes::effEditOpen, 0, 0, hwnd, 0);
-            ERect* eRect = 0;
-            effect->dispatcher(effect, AEffectOpcodes::effEditGetRect, 0, 0, &eRect, 0);
-            if (eRect)
+            SetWindowLongPtr(hwnd, GWLP_USERDATA, lParam);
+            SetWindowText(hwnd, L"VST Host");
+            SetTimer(hwnd, 1, 20, 0);
+            effect = (AEffect*)lParam;
+            if (effect)
             {
-                int width = eRect->right - eRect->left;
-                int height = eRect->bottom - eRect->top;
-                if (width < 50)
-                {
-                    width = 50;
-                }
-                if (height < 50)
-                {
-                    height = 50;
-                }
-                RECT wRect;
-                SetRect(&wRect, 0, 0, width, height);
-                AdjustWindowRectEx(&wRect, GetWindowLong(hwnd, GWL_STYLE), FALSE, GetWindowLong(hwnd, GWL_EXSTYLE));
-                width = wRect.right - wRect.left;
-                height = wRect.bottom - wRect.top;
-                SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_SHOWWINDOW | SWP_NOMOVE);
-            }
-        }
-    }
-    break;
+                char product[VstStringConstants::kVstMaxProductStrLen] = { 0 };
+                effect->dispatcher(effect, effGetProductString, 0, 0, &product, 0);
 
-    case WM_TIMER:
-        effect = (AEffect*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        if (effect)
-        {
-            effect->dispatcher(effect, AEffectOpcodes::effEditIdle, 0, 0, 0, 0);
+                SetWindowTextA(hwnd, (LPCSTR)product);
+
+                effect->dispatcher(effect, AEffectOpcodes::effEditOpen, 0, 0, hwnd, 0);
+                ERect* eRect = 0;
+                effect->dispatcher(effect, AEffectOpcodes::effEditGetRect, 0, 0, &eRect, 0);
+                if (eRect)
+                {
+                    int width = eRect->right - eRect->left;
+                    int height = eRect->bottom - eRect->top;
+                    if (width < 50)
+                    {
+                        width = 50;
+                    }
+                    if (height < 50)
+                    {
+                        height = 50;
+                    }
+                    RECT wRect;
+                    SetRect(&wRect, 0, 0, width, height);
+                    AdjustWindowRectEx(&wRect, GetWindowLong(hwnd, GWL_STYLE), FALSE, GetWindowLong(hwnd, GWL_EXSTYLE));
+                    width = wRect.right - wRect.left;
+                    height = wRect.bottom - wRect.top;
+                    SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_SHOWWINDOW | SWP_NOMOVE);
+                }
+            }
         }
         break;
 
-    case WM_CLOSE:
-    {
-        effect = (AEffect*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        KillTimer(hwnd, 1);
-        if (effect)
-        {
-            effect->dispatcher(effect, AEffectOpcodes::effEditClose, 0, 0, 0, 0);
-        }
+        case WM_TIMER:
+            effect = (AEffect*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            if (effect)
+            {
+                effect->dispatcher(effect, AEffectOpcodes::effEditIdle, 0, 0, 0, 0);
+            }
+            break;
 
-        EndDialog(hwnd, IDOK);
-    }
-    break;
+        case WM_CLOSE:
+        {
+            effect = (AEffect*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+            KillTimer(hwnd, 1);
+            if (effect)
+            {
+                effect->dispatcher(effect, AEffectOpcodes::effEditClose, 0, 0, 0, 0);
+            }
+
+            EndDialog(hwnd, IDOK);
+        }
+        break;
     }
 
     return 0;
@@ -345,93 +345,93 @@ static VstIntPtr VSTCALLBACK audioMaster(AEffect* effect, VstInt32 opcode, VstIn
 
     switch (opcode)
     {
-    case AudioMasterOpcodes::audioMasterAutomate:
-        /// The user changed a parameter in plug-ins editor, which is out of the Host's control.
-        /// This ensures that the Host is notified of the parameter change, which
-        /// allows it to record these changes for automation.
-        /// [index]: parameter index
-        /// [opt]: parameter value
-        /// @see AudioEffect::setParameterAutomated
-        break;
+        case AudioMasterOpcodes::audioMasterAutomate:
+            /// The user changed a parameter in plug-ins editor, which is out of the Host's control.
+            /// This ensures that the Host is notified of the parameter change, which
+            /// allows it to record these changes for automation.
+            /// [index]: parameter index
+            /// [opt]: parameter value
+            /// @see AudioEffect::setParameterAutomated
+            break;
 
-    case AudioMasterOpcodes::audioMasterVersion:
-        /// Used to ask for the Host's version
-        /// [return value]: Host VST version (for example 2400 for VST 2.4)
-        /// @see AudioEffect::getMasterVersion
-        return kVstVersion;
+        case AudioMasterOpcodes::audioMasterVersion:
+            /// Used to ask for the Host's version
+            /// [return value]: Host VST version (for example 2400 for VST 2.4)
+            /// @see AudioEffect::getMasterVersion
+            return kVstVersion;
 
-    case AudioMasterOpcodes::audioMasterCurrentId:
-        /// [return value]: current unique identifier on shell plug-in
-        /// @see AudioEffect::getCurrentUniqueId
-        if (data)
-        {
-            return data->effect_number;
-        }
-        break;
-
-    case AudioMasterOpcodes::audioMasterIdle:
-        /// Give idle time to Host application, e.g. if plug-in editor is doing mouse tracking in a modal loop.
-        /// no arguments
-        /// @see AudioEffect::masterIdle
-        break;
-
-    case AudioMasterOpcodes::audioMasterPinConnected:
-        /// [return value]: 0=true, 1=false
-        /// [index]: pin index
-        /// [value]: 0=input, 1=output
-        /// @see AudioEffect::isInputConnected
-        /// @see AudioEffect::isOutputConnected
-        break;
-
-    case AudioMasterOpcodesX::audioMasterGetVendorString:
-        /// [ptr]: char buffer for vendor string, limited to #kVstMaxVendorStrLen
-        /// @see AudioEffectX::getHostVendorString
-        strncpy((char*)ptr, "NoWork, Inc.", VstStringConstants::kVstMaxVendorStrLen);
-        //strncpy((char *)ptr, "YAMAHA", 64);
-        break;
-
-    case AudioMasterOpcodesX::audioMasterGetProductString:
-        /// [ptr]: char buffer for vendor string, limited to #kVstMaxProductStrLen
-        /// @see AudioEffectX::getHostProductString
-        strncpy((char*)ptr, "VSTi Host Bridge", VstStringConstants::kVstMaxProductStrLen);
-        //strncpy((char *)ptr, "SOL/SQ01", 64);
-        break;
-
-    case AudioMasterOpcodesX::audioMasterGetVendorVersion:
-        /// [return value]: vendor-specific version
-        /// @see AudioEffectX::getHostVendorVersion
-        return 1010;
-
-    case AudioMasterOpcodesX::audioMasterGetLanguage:
-        /// [return value]: language code
-        /// @see VstHostLanguage
-        return VstHostLanguage::kVstLangEnglish;
-
-    case AudioMasterOpcodesX::audioMasterVendorSpecific:
-        /// no definition, vendor specific handling
-        /// @see AudioEffectX::hostVendorSpecific
-        /* Steinberg HACK */
-        if (ptr)
-        {
-            uint32_t* blah = (uint32_t*)(((char*)ptr) - 4);
-            if (*blah == 0x0737bb68)
+        case AudioMasterOpcodes::audioMasterCurrentId:
+            /// [return value]: current unique identifier on shell plug-in
+            /// @see AudioEffect::getCurrentUniqueId
+            if (data)
             {
-                *blah ^= 0x5CC8F349;
-                blah[2] = 0x19E;
-                return 0x1E7;
+                return data->effect_number;
             }
-        }
-        break;
+            break;
 
-    case AudioMasterOpcodesX::audioMasterGetDirectory:
-        /// [return value]: FSSpec on 32 bit MAC, else char*
-        /// @see AudioEffectX::getDirectory
-        return (VstIntPtr)dll_dir;
+        case AudioMasterOpcodes::audioMasterIdle:
+            /// Give idle time to Host application, e.g. if plug-in editor is doing mouse tracking in a modal loop.
+            /// no arguments
+            /// @see AudioEffect::masterIdle
+            break;
 
-        /* More crap */
-    case DECLARE_VST_DEPRECATED(audioMasterNeedIdle):
-        need_idle = true;
-        return 0;
+        case AudioMasterOpcodes::audioMasterPinConnected:
+            /// [return value]: 0=true, 1=false
+            /// [index]: pin index
+            /// [value]: 0=input, 1=output
+            /// @see AudioEffect::isInputConnected
+            /// @see AudioEffect::isOutputConnected
+            break;
+
+        case AudioMasterOpcodesX::audioMasterGetVendorString:
+            /// [ptr]: char buffer for vendor string, limited to #kVstMaxVendorStrLen
+            /// @see AudioEffectX::getHostVendorString
+            strncpy((char*)ptr, "NoWork, Inc.", VstStringConstants::kVstMaxVendorStrLen);
+            //strncpy((char *)ptr, "YAMAHA", 64);
+            break;
+
+        case AudioMasterOpcodesX::audioMasterGetProductString:
+            /// [ptr]: char buffer for vendor string, limited to #kVstMaxProductStrLen
+            /// @see AudioEffectX::getHostProductString
+            strncpy((char*)ptr, "VSTi Host Bridge", VstStringConstants::kVstMaxProductStrLen);
+            //strncpy((char *)ptr, "SOL/SQ01", 64);
+            break;
+
+        case AudioMasterOpcodesX::audioMasterGetVendorVersion:
+            /// [return value]: vendor-specific version
+            /// @see AudioEffectX::getHostVendorVersion
+            return 1010;
+
+        case AudioMasterOpcodesX::audioMasterGetLanguage:
+            /// [return value]: language code
+            /// @see VstHostLanguage
+            return VstHostLanguage::kVstLangEnglish;
+
+        case AudioMasterOpcodesX::audioMasterVendorSpecific:
+            /// no definition, vendor specific handling
+            /// @see AudioEffectX::hostVendorSpecific
+            /* Steinberg HACK */
+            if (ptr)
+            {
+                uint32_t* blah = (uint32_t*)(((char*)ptr) - 4);
+                if (*blah == 0x0737bb68)
+                {
+                    *blah ^= 0x5CC8F349;
+                    blah[2] = 0x19E;
+                    return 0x1E7;
+                }
+            }
+            break;
+
+        case AudioMasterOpcodesX::audioMasterGetDirectory:
+            /// [return value]: FSSpec on 32 bit MAC, else char*
+            /// @see AudioEffectX::getDirectory
+            return (VstIntPtr)dll_dir;
+
+            /* More crap */
+        case DECLARE_VST_DEPRECATED(audioMasterNeedIdle):
+            need_idle = true;
+            return 0;
     }
 
     return 0;
@@ -623,294 +623,294 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
         switch (command)
         {
-        case Command::GetChunkData:
-        {
-            GetChunk(pEffect, chunk);
-
-            SendData(0u);
-            SendData(chunk.size());
-            SendData(chunk);
-        }
-        break;
-
-        case Command::SetChunkData:
-        {
-            uint32_t size = ReceiveData();
-            chunk.resize(size);
-            if (size)
+            case Command::GetChunkData:
             {
-                ReceiveData(chunk.data(), size);
-            }
-
-            SetChunk(pEffect, chunk);
-
-            SendData(0u);
-        }
-        break;
-
-        case Command::HasEditor:
-        {
-            uint32_t hasEditor = pEffect->flags & effFlagsHasEditor;
-
-            SendData(0u);
-            SendData(hasEditor);
-        }
-        break;
-
-        case Command::DisplayEditorModal:
-        {
-            if (pEffect->flags & effFlagsHasEditor)
-            {
-                MyDLGTEMPLATE vstiEditor;
-                vstiEditor.style = WS_POPUPWINDOW | WS_DLGFRAME | DS_MODALFRAME | DS_CENTER;
-                DialogBoxIndirectParam(0, &vstiEditor, GetDesktopWindow(), (DLGPROC)WindowProc, (LPARAM)(pEffect));
                 GetChunk(pEffect, chunk);
+
+                SendData(0u);
+                SendData(chunk.size());
+                SendData(chunk);
             }
+            break;
 
-            SendData(0u);
-        }
-        break;
-
-        case Command::SetSampleRate:
-        {
-            uint32_t size = ReceiveData();
-            if (size != sizeof(sampleRate))
+            case Command::SetChunkData:
             {
-                code = Response::CannotSetSampleRate;
-                goto exit;
-            }
-
-            sampleRate = ReceiveData();
-
-            SendData(0u);
-        }
-        break;
-
-        case Command::Reset:
-        {
-            if (blState.size()) pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
-            pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
-
-            blState.resize(0);
-
-            FreeMidiEventChain();
-
-            pEffect = pMain(&audioMaster);
-            if (!pEffect)
-            {
-                code = Response::CannotReset;
-                goto exit;
-            }
-            pEffect->user = &effectData;
-            pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
-            SetChunk(pEffect, chunk);
-
-            SendData(0u);
-        }
-        break;
-
-        case Command::SendMidiEvent:
-        {
-            MidiEvent* ev = (MidiEvent*)calloc(sizeof(MidiEvent), 1);
-            if (evTail)
-            {
-                evTail->next = ev;
-            }
-            evTail = ev;
-            if (!evChain)
-            {
-                evChain = ev;
-            }
-
-            uint32_t b = ReceiveData();
-
-            /// To Do - Limit the midi ports to one per host
-            ev->port = (b & 0x7F000000) >> 24;
-            if (ev->port > 2)
-            {
-                ev->port = 2;
-            }
-            ev->ev.midiEvent.type = kVstMidiType;
-            ev->ev.midiEvent.byteSize = sizeof(ev->ev.midiEvent);
-            memcpy(&ev->ev.midiEvent.midiData, &b, 3);
-
-            SendData(0u);
-        }
-        break;
-
-        case Command::SendMidiSystemExclusiveEvent:
-        {
-            MidiEvent* ev = (MidiEvent*)calloc(sizeof(MidiEvent), 1);
-            if (evTail) evTail->next = ev;
-            evTail = ev;
-            if (!evChain) evChain = ev;
-
-            uint32_t size = ReceiveData();
-            uint32_t port = size >> 24;
-            size &= 0xFFFFFF;
-
-            ev->port = port;
-            if (ev->port > 2) ev->port = 2;
-            ev->ev.sysexEvent.type = kVstSysExType;
-            ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
-            ev->ev.sysexEvent.dumpBytes = size;
-            ev->ev.sysexEvent.sysexDump = (char*)malloc(size);
-
-            ReceiveData(ev->ev.sysexEvent.sysexDump, size);
-
-            SendData(0u);
-        }
-        break;
-
-        case Command::RenderAudioSamples:
-        {
-            if (!blState.size())
-            {
-                pEffect->dispatcher(pEffect, effSetSampleRate, 0, 0, 0, float(sampleRate));
-                pEffect->dispatcher(pEffect, effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
-                pEffect->dispatcher(pEffect, effMainsChanged, 0, 1, 0, 0);
-                pEffect->dispatcher(pEffect, effStartProcess, 0, 0, 0, 0);
-
-                size_t buffer_size = sizeof(float*) * (pEffect->numInputs + audioOutputs * 3);   // float lists (inputs + outputs)
-                buffer_size += sizeof(float) * BUFFER_SIZE;                                         // null input
-                buffer_size += sizeof(float) * BUFFER_SIZE * audioOutputs * 3;                      // outputs
-
-                blState.resize(buffer_size);
-
-                float_list_in = (float**)blState.data();
-                float_list_out = float_list_in + pEffect->numInputs;
-                float_null = (float*)(float_list_out + audioOutputs * 3);
-                float_out = float_null + BUFFER_SIZE;
-
-                for (unsigned i = 0; i < pEffect->numInputs; ++i)
+                uint32_t size = ReceiveData();
+                chunk.resize(size);
+                if (size)
                 {
-                    float_list_in[i] = float_null;
-                }
-                for (unsigned i = 0; i < audioOutputs * 3; ++i)
-                {
-                    float_list_out[i] = float_out + BUFFER_SIZE * i;
+                    ReceiveData(chunk.data(), size);
                 }
 
-                memset(float_null, 0, sizeof(float) * BUFFER_SIZE);
+                SetChunk(pEffect, chunk);
 
-                sample_buffer.resize((BUFFER_SIZE << 1) * audioOutputs);
+                SendData(0u);
             }
+            break;
 
-            if (need_idle)
+            case Command::HasEditor:
             {
-                pEffect->dispatcher(pEffect, DECLARE_VST_DEPRECATED(effIdle), 0, 0, 0, 0);
+                uint32_t hasEditor = pEffect->flags & effFlagsHasEditor;
 
-                if (!idle_started)
+                SendData(0u);
+                SendData(hasEditor);
+            }
+            break;
+
+            case Command::DisplayEditorModal:
+            {
+                if (pEffect->flags & effFlagsHasEditor)
                 {
-                    unsigned idle_run = BUFFER_SIZE * 200;
+                    MyDLGTEMPLATE vstiEditor;
+                    vstiEditor.style = WS_POPUPWINDOW | WS_DLGFRAME | DS_MODALFRAME | DS_CENTER;
+                    DialogBoxIndirectParam(0, &vstiEditor, GetDesktopWindow(), (DLGPROC)WindowProc, (LPARAM)(pEffect));
+                    GetChunk(pEffect, chunk);
+                }
 
-                    while (idle_run)
+                SendData(0u);
+            }
+            break;
+
+            case Command::SetSampleRate:
+            {
+                uint32_t size = ReceiveData();
+                if (size != sizeof(sampleRate))
+                {
+                    code = Response::CannotSetSampleRate;
+                    goto exit;
+                }
+
+                sampleRate = ReceiveData();
+
+                SendData(0u);
+            }
+            break;
+
+            case Command::Reset:
+            {
+                if (blState.size()) pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
+                pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
+
+                blState.resize(0);
+
+                FreeMidiEventChain();
+
+                pEffect = pMain(&audioMaster);
+                if (!pEffect)
+                {
+                    code = Response::CannotReset;
+                    goto exit;
+                }
+                pEffect->user = &effectData;
+                pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
+                SetChunk(pEffect, chunk);
+
+                SendData(0u);
+            }
+            break;
+
+            case Command::SendMidiEvent:
+            {
+                MidiEvent* ev = (MidiEvent*)calloc(sizeof(MidiEvent), 1);
+                if (evTail)
+                {
+                    evTail->next = ev;
+                }
+                evTail = ev;
+                if (!evChain)
+                {
+                    evChain = ev;
+                }
+
+                uint32_t b = ReceiveData();
+
+                /// To Do - Limit the midi ports to one per host
+                ev->port = (b & 0x7F000000) >> 24;
+                if (ev->port > 2)
+                {
+                    ev->port = 2;
+                }
+                ev->ev.midiEvent.type = kVstMidiType;
+                ev->ev.midiEvent.byteSize = sizeof(ev->ev.midiEvent);
+                memcpy(&ev->ev.midiEvent.midiData, &b, 3);
+
+                SendData(0u);
+            }
+            break;
+
+            case Command::SendMidiSystemExclusiveEvent:
+            {
+                MidiEvent* ev = (MidiEvent*)calloc(sizeof(MidiEvent), 1);
+                if (evTail) evTail->next = ev;
+                evTail = ev;
+                if (!evChain) evChain = ev;
+
+                uint32_t size = ReceiveData();
+                uint32_t port = size >> 24;
+                size &= 0xFFFFFF;
+
+                ev->port = port;
+                if (ev->port > 2) ev->port = 2;
+                ev->ev.sysexEvent.type = kVstSysExType;
+                ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
+                ev->ev.sysexEvent.dumpBytes = size;
+                ev->ev.sysexEvent.sysexDump = (char*)malloc(size);
+
+                ReceiveData(ev->ev.sysexEvent.sysexDump, size);
+
+                SendData(0u);
+            }
+            break;
+
+            case Command::RenderAudioSamples:
+            {
+                if (!blState.size())
+                {
+                    pEffect->dispatcher(pEffect, effSetSampleRate, 0, 0, 0, float(sampleRate));
+                    pEffect->dispatcher(pEffect, effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
+                    pEffect->dispatcher(pEffect, effMainsChanged, 0, 1, 0, 0);
+                    pEffect->dispatcher(pEffect, effStartProcess, 0, 0, 0, 0);
+
+                    size_t buffer_size = sizeof(float*) * (pEffect->numInputs + audioOutputs * 3);   // float lists (inputs + outputs)
+                    buffer_size += sizeof(float) * BUFFER_SIZE;                                         // null input
+                    buffer_size += sizeof(float) * BUFFER_SIZE * audioOutputs * 3;                      // outputs
+
+                    blState.resize(buffer_size);
+
+                    float_list_in = (float**)blState.data();
+                    float_list_out = float_list_in + pEffect->numInputs;
+                    float_null = (float*)(float_list_out + audioOutputs * 3);
+                    float_out = float_null + BUFFER_SIZE;
+
+                    for (unsigned i = 0; i < pEffect->numInputs; ++i)
                     {
-                        unsigned sampleFrames = min(idle_run, BUFFER_SIZE);
+                        float_list_in[i] = float_null;
+                    }
+                    for (unsigned i = 0; i < audioOutputs * 3; ++i)
+                    {
+                        float_list_out[i] = float_out + BUFFER_SIZE * i;
+                    }
 
-                        pEffect->processReplacing(pEffect, float_list_in, float_list_out, sampleFrames);
+                    memset(float_null, 0, sizeof(float) * BUFFER_SIZE);
 
-                        pEffect->dispatcher(pEffect, DECLARE_VST_DEPRECATED(effIdle), 0, 0, 0, 0);
+                    sample_buffer.resize((BUFFER_SIZE << 1) * audioOutputs);
+                }
 
-                        idle_run -= sampleFrames;
+                if (need_idle)
+                {
+                    pEffect->dispatcher(pEffect, DECLARE_VST_DEPRECATED(effIdle), 0, 0, 0, 0);
+
+                    if (!idle_started)
+                    {
+                        unsigned idle_run = BUFFER_SIZE * 200;
+
+                        while (idle_run)
+                        {
+                            unsigned sampleFrames = min(idle_run, BUFFER_SIZE);
+
+                            pEffect->processReplacing(pEffect, float_list_in, float_list_out, sampleFrames);
+
+                            pEffect->dispatcher(pEffect, DECLARE_VST_DEPRECATED(effIdle), 0, 0, 0, 0);
+
+                            idle_run -= sampleFrames;
+                        }
                     }
                 }
-            }
 
-            VstEvents* events = 0;
+                VstEvents* events = 0;
 
-            if (evChain)
-            {
-                unsigned event_count = 0;
-                MidiEvent* ev = evChain;
-                while (ev)
+                if (evChain)
                 {
-                    ++event_count;
-                    ev = ev->next;
-                }
-
-                if (event_count > 0)
-                {
-                    events = (VstEvents*)malloc(sizeof(VstInt32) + sizeof(VstIntPtr) + sizeof(VstEvent*) * event_count);
-
-                    events->numEvents = event_count;
-                    events->reserved = 0;
-
-                    ev = evChain;
-
-                    for (size_t i = 0; ev;)
+                    unsigned event_count = 0;
+                    MidiEvent* ev = evChain;
+                    while (ev)
                     {
-                        if (ev->port == 0)
-                        {
-                            events->events[i++] = (VstEvent*)&ev->ev;
-                        }
+                        ++event_count;
                         ev = ev->next;
                     }
 
-                    pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events, 0);
-                }
-            }
-
-            if (need_idle)
-            {
-                pEffect->dispatcher(pEffect, DECLARE_VST_DEPRECATED(effIdle), 0, 0, 0, 0);
-
-                if (!idle_started)
-                {
-                    if (events) pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events, 0);
-
-                    idle_started = true;
-                }
-            }
-
-            uint32_t count = ReceiveData();
-
-            SendData(0u);
-
-            while (count)
-            {
-                unsigned sampleFrames = min(count, BUFFER_SIZE);
-
-                pEffect->processReplacing(pEffect, float_list_in, float_list_out, sampleFrames);
-
-                float* out = sample_buffer.data();
-
-                if (audioOutputs == 2)
-                {
-                    for (size_t i = 0; i < sampleFrames; ++i)
+                    if (event_count > 0)
                     {
-                        out[0] = float_out[i];
-                        out[1] = float_out[i + BUFFER_SIZE];
-                        out += 2;
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0; i < sampleFrames; ++i)
-                    {
-                        out[0] = float_out[i];
-                        ++out;
+                        events = (VstEvents*)malloc(sizeof(VstInt32) + sizeof(VstIntPtr) + sizeof(VstEvent*) * event_count);
+
+                        events->numEvents = event_count;
+                        events->reserved = 0;
+
+                        ev = evChain;
+
+                        for (size_t i = 0; ev;)
+                        {
+                            if (ev->port == 0)
+                            {
+                                events->events[i++] = (VstEvent*)&ev->ev;
+                            }
+                            ev = ev->next;
+                        }
+
+                        pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events, 0);
                     }
                 }
 
-                SendData(sample_buffer.data(), sampleFrames * sizeof(float) * audioOutputs);
+                if (need_idle)
+                {
+                    pEffect->dispatcher(pEffect, DECLARE_VST_DEPRECATED(effIdle), 0, 0, 0, 0);
 
-                count -= sampleFrames;
+                    if (!idle_started)
+                    {
+                        if (events) pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events, 0);
+
+                        idle_started = true;
+                    }
+                }
+
+                uint32_t count = ReceiveData();
+
+                SendData(0u);
+
+                while (count)
+                {
+                    unsigned sampleFrames = min(count, BUFFER_SIZE);
+
+                    pEffect->processReplacing(pEffect, float_list_in, float_list_out, sampleFrames);
+
+                    float* out = sample_buffer.data();
+
+                    if (audioOutputs == 2)
+                    {
+                        for (size_t i = 0; i < sampleFrames; ++i)
+                        {
+                            out[0] = float_out[i];
+                            out[1] = float_out[i + BUFFER_SIZE];
+                            out += 2;
+                        }
+                    }
+                    else
+                    {
+                        for (size_t i = 0; i < sampleFrames; ++i)
+                        {
+                            out[0] = float_out[i];
+                            ++out;
+                        }
+                    }
+
+                    SendData(sample_buffer.data(), sampleFrames * sizeof(float) * audioOutputs);
+
+                    count -= sampleFrames;
+                }
+
+                if (events)
+                {
+                    free(events);
+                }
+
+                FreeMidiEventChain();
             }
-
-            if (events)
-            {
-                free(events);
-            }
-
-            FreeMidiEventChain();
-        }
-        break;
-
-        default:
-            code = Response::CommandUnknown;
-            goto exit;
             break;
+
+            default:
+                code = Response::CommandUnknown;
+                goto exit;
+                break;
         }
     }
 
