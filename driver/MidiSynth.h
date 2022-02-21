@@ -23,36 +23,33 @@ class VSTDriver;
 
 namespace VSTMIDIDRV {
 
-class MidiSynth {
-private:
-	unsigned int sampleRate;
-	unsigned int midiLatency, midiLatencyMS;
-	unsigned int bufferSize, bufferSizeMS;
-	unsigned int chunkSize, chunkSizeMS;
-	bool resetEnabled;
-	float outputGain;
+    class MidiSynth {
+    private:
+        unsigned int sampleRate;
+        unsigned int midiLatency, midiLatencyMS;
+        unsigned int bufferSize, bufferSizeMS;
+        unsigned int chunkSize, chunkSizeMS;
+        bool resetEnabled;
+        float outputGain;
 
-	short *buffer;
-	float *bufferf;
-	DWORD framesRendered;
+        short* buffer;
+        float* bufferf;
+        DWORD framesRendered;
 
-	VSTDriver * vstDriver;
+        VSTDriver* vstDriver;
 
-	unsigned int MillisToFrames(unsigned int millis);
-	void LoadSettings();
+        MidiSynth();
 
-	MidiSynth();
-
-public:
-	static MidiSynth &getInstance();
-	int Init();
-	void Close();
-	int Reset(unsigned uDeviceID);
-	void Render(short *bufpos, DWORD totalFrames);
-	void RenderFloat(float *bufpos, DWORD totalFrames);
-	void PushMIDI(unsigned uDeviceID, DWORD msg);
-	void PlaySysex(unsigned uDeviceID, unsigned char *bufpos, DWORD len);
-};
+    public:
+        static MidiSynth& getInstance();
+        int Init(unsigned uDeviceID) noexcept;
+        void Close() noexcept;
+        int Reset(unsigned uDeviceID) noexcept;
+        void Render(short* bufpos, DWORD totalFrames);
+        void RenderFloat(float* bufpos, DWORD totalFrames);
+        DWORD PutMidiMessage(unsigned uDeviceID, DWORD dwParam1);
+        DWORD PutSysEx(unsigned uDeviceID, unsigned char* bufpos, DWORD len);
+    };
 
 }
 #endif
