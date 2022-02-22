@@ -68,9 +68,9 @@ public:
 		// center the dialog on the screen
 		CenterWindow();
 		// set icons
-		HICON hIcon = AtlLoadIconImage(IDR_MAINFRAME, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON));
+		HICON hIcon = AtlLoadIconImage(IDI_DRIVERCFG, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXICON), ::GetSystemMetrics(SM_CYICON));
 		SetIcon(hIcon, TRUE);
-		HICON hIconSmall = AtlLoadIconImage(IDR_MAINFRAME, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON));
+		HICON hIconSmall = AtlLoadIconImage(IDI_SMALL, LR_DEFAULTCOLOR, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON));
 		SetIcon(hIconSmall, FALSE);
 		m_ctrlTab.SubclassWindow(GetDlgItem(IDC_TAB));
 		m_view1.Create(m_hWnd);
@@ -78,7 +78,7 @@ public:
 		m_view2.Create(m_hWnd);
 		TCITEM tci = { 0 };
 		tci.mask = TCIF_TEXT;
-		tci.pszText = _T("VST settings");
+		tci.pszText = _T("VSTi Settings");
 		m_ctrlTab.InsertItem(0, &tci, m_view1);
 		if (!IsWin8OrNewer())
 		{
