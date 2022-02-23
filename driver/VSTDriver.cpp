@@ -356,6 +356,7 @@ bool VSTDriver::process_create(uint32_t** error)
 
 	szCmdLine += my_path;
 	szCmdLine.resize(szCmdLine.find_last_of('\\') + 1);
+	szCmdLine += L"vstmididrv\\";
 	szCmdLine += (uPluginPlatform == 64) ? L"vsthost64.exe" : L"vsthost32.exe";
 	szCmdLine += L"\" \"";
 	szCmdLine += szPluginPath;
@@ -736,7 +737,7 @@ bool VSTDriver::OpenVSTDriver(TCHAR* szPath, uint32_t** error)
 
 	LoadVstiSettings();
 
-	timeSetEvent(1000, 10, (LPTIMECALLBACK)TimeProc, (DWORD)this, TIME_ONESHOT);
+	//timeSetEvent(1000, 10, (LPTIMECALLBACK)TimeProc, (DWORD)this, TIME_ONESHOT);
 
 	return true;
 }

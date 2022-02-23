@@ -26,7 +26,6 @@ static VSTMIDIDRV::MidiSynth& midiSynth = VSTMIDIDRV::MidiSynth::getInstance();
 
 static bool isSynthOpened = false;
 //static HWND hwnd = NULL;
-FLOAT SynthVolume = 1.0;
 
 /// <summary>
 /// Entry point into a dynamic-link library (DLL).
@@ -241,10 +240,8 @@ STDAPI_(LRESULT) DriverProc(DWORD_PTR dwDriverId, HDRVR hdrvr, UINT uMsg, LPARAM
             /// The lParam1 and lParam2 parameters are not used.
             /// No return value.
             return DRV_OK;
-
-        default:
-            return DefDriverProc(dwDriverId, hdrvr, uMsg, dwParam1, dwParam2);
     }
+    return DRV_OK;
 }
 
 HRESULT GetMidiDeviceCapabilities(UINT uDeviceID, PVOID capsPtr, DWORD capsSize)
@@ -315,7 +312,7 @@ HRESULT GetMidiDeviceCapabilities(UINT uDeviceID, PVOID capsPtr, DWORD capsSize)
             ///         Supports volume control.
             /// If a device supports volume changes, the MIDICAPS_VOLUME flag will be set for the dwSupport member.
             /// If a device supports separate volume changes on the left and right channels, both the MIDICAPS_VOLUME and the MIDICAPS_LRVOLUME flags will be set for this member.
-            myCapsA->dwSupport;
+            myCapsA->dwSupport = 0;
             return MMSYSERR_NOERROR;
 
         case (sizeof(MIDIOUTCAPSW)):
@@ -329,7 +326,7 @@ HRESULT GetMidiDeviceCapabilities(UINT uDeviceID, PVOID capsPtr, DWORD capsSize)
             myCapsW->wVoices = 0;
             myCapsW->wNotes = 0;
             myCapsW->wChannelMask = 0xffff;
-            myCapsW->dwSupport;
+            myCapsW->dwSupport = 0;
             return MMSYSERR_NOERROR;
 
         case (sizeof(MIDIOUTCAPS2A)):
@@ -343,7 +340,7 @@ HRESULT GetMidiDeviceCapabilities(UINT uDeviceID, PVOID capsPtr, DWORD capsSize)
             myCaps2A->wVoices = 0;
             myCaps2A->wNotes = 0;
             myCaps2A->wChannelMask = 0xffff;
-            myCaps2A->dwSupport;
+            myCaps2A->dwSupport = 0;
             return MMSYSERR_NOERROR;
 
         case (sizeof(MIDIOUTCAPS2W)):
@@ -357,7 +354,7 @@ HRESULT GetMidiDeviceCapabilities(UINT uDeviceID, PVOID capsPtr, DWORD capsSize)
             myCaps2W->wVoices = 0;
             myCaps2W->wNotes = 0;
             myCaps2W->wChannelMask = 0xffff;
-            myCaps2W->dwSupport;
+            myCaps2W->dwSupport = 0;
             return MMSYSERR_NOERROR;
 
         default:
@@ -629,102 +626,6 @@ STDAPI_(DWORD) modMessage(DWORD uDeviceID, DWORD uMsg, DWORD_PTR dwUser, DWORD_P
             /// WINMM sends the MODM_GETNUMDEVS message to the modMessage function of a MIDI output driver to request the number of MIDI output devices available.
             /// The modMessage function returns the number of MIDI output devices that the driver supports.
             return MAX_DRIVERS;
-
-        case MODM_GETVOLUME:
-            /// WINMM sends the MODM_GETVOLUME message to the modMessage function of a MIDI output driver to request the current volume level setting for a MIDI device.
-            /// uDeviceID
-            ///     Specifies the ID of the target device. Device IDs are sequential and have an initial value of zero and a final value that is equal to one less than the number of devices that the driver supports.
-            /// uMsg
-            ///     WINMM sets this parameter to MODM_GETVOLUME when it calls modMessage to process this message.
-            /// dwUser
-            ///     Use this parameter to return instance data to the driver.
-            ///     Drivers that support multiple clients can use this instance data to track the client that is associated with the message.
-            /// dwParam1
-            ///     This parameter specifies a far pointer to a DWORD location.
-            ///     The driver fills this location with the current volume level setting.
-            ///     The high-order word contains the right channel setting and the low-order word contains the left channel setting.
-            ///     A value of zero is silence, and a value of 0xFFFF is full volume.
-            ///     If the driver does not support both left and right channel volume changes, it returns the volume level setting in the low-order word.
-            /// dwParam2
-            ///     Not used.
-            /// 
-            /// Only drivers for internal synthesizer devices can support volume level changes.
-            /// Drivers for MIDI output ports should return an MMSYSERR_NOTSUPPORTED error for this message.
-            /// Support for volume level changes by internal synthesizer devices is optional.
-            /// However, if a driver supports changes to the volume level with the MODM_SETVOLUME message, it must support queries with the MODM_GETVOLUME message.
-
-            * (LONG*)dwParam1 = (LONG)(SynthVolume * 0xFFFF);
-            // midiOutGetVolume((HMIDIOUT)dwUser, (LPDWORD)dwParam1);
-            return MMSYSERR_NOERROR;
-
-        case MODM_SETVOLUME:
-            /// WINMM sends the MODM_SETVOLUME message to the modMessage function of a MIDI output driver to set the volume for a MIDI device.
-            ///
-            /// uDeviceID
-            ///     Specifies the ID of the target device.
-            ///     Device IDs are sequential and have an initial value of zero and a final value that is equal to one less than the number of devices that the driver supports.
-            /// uMsg
-            ///     WINMM sets this parameter to MODM_SETVOLUME when it calls modMessage to process this message.
-            /// dwUser
-            ///     Use this parameter to return instance data to the driver.
-            ///     Drivers that support multiple clients can use this instance data to track the client that is associated with the message.
-            /// dwParam1
-            ///     This parameter specifies the new volume level.
-            ///     The high-order word contains the right channel setting and the low-order word contains the left channel setting.
-            ///     A value of zero is silence, and a value of 0xFFFF is full volume.
-            ///     If the driver does not support both left and right channel volume changes, it uses the volume specified in the low-order word.
-            ///     The driver will typically not support the full 16 bits of volume control and must truncate the lower bits if necessary.
-            ///     However, the original volume level set with MODM_SETVOLUME must be returned with MODM_GETVOLUME.
-            /// dwParam2
-            ///     Not used.
-            /// 
-            /// The modMessage function returns MMSYSERR_NOERROR if the operation was successful.
-            /// Otherwise, it returns one of the error messages in the following table.
-            ///     MMSYSERR_NOTENABLED     The driver failed to load or initialize.
-            ///     MMSYSERR_NOTSUPPORTED   The driver does not support changes to volume level.
-            /// 
-            /// This volume level is the final output volume; therefore, only drivers for internal synthesizer devices can support volume level changes.
-            /// Drivers for MIDI output ports must return a MMSYSERR_NOTSUPPORTED error for this message.
-            /// Support for volume level changes is optional for internal synthesizer devices.
-            /// When a driver receives a MODM_GETDEVCAPS message, it must indicate support for volume level changes by setting or clearing the MIDICAPS_VOLUME and MIDICAPS_LRVOLUME bits in the dwSupport field of the MIDIOUTCAPS data structure.
-            /// If a driver supports the MODM_SETVOLUME message, it must also support MODM_GETVOLUME.
-
-            //midiSynth.PutSysex(uDeviceID, (unsigned char*)SysexXgVolume, sizeof(SysexXgVolume));
-
-            /// The midiOutSetVolume function sets the volume of a MIDI output device.
-            /// hmo
-            ///     Handle to an open MIDI output device.
-            ///     This parameter can also contain the handle of a MIDI stream, as long as it is cast to HMIDIOUT.
-            ///     This parameter can also be a device identifier.
-            /// dwVolume
-            ///     New volume setting.
-            ///     The low-order word contains the left-channel volume setting, and the high-order word contains the right-channel setting.
-            ///     A value of 0xFFFF represents full volume, and a value of 0x0000 is silence.
-            ///     If a device does not support both leftand right volume control, the low - order word of dwVolume specifies the mono volume level, and the high-order word is ignored.
-            /// 
-            /// Returns MMSYSERR_NOERROR if successful or an error otherwise.
-            /// Possible error values include the following.
-            ///     MMSYSERR_INVALHANDLE    The specified device handle is invalid.
-            ///     MMSYSERR_NOMEM          The system is unable to allocate or lock memory.
-            ///     MMSYSERR_NOTSUPPORTED   The function is not supported.
-            ///
-            /// If a device identifier is used, then the result of the midiOutSetVolume call applies to all instances of the device.
-            /// If a device handle is used, then the result applies only to the instance of the device referenced by the device handle.
-            /// 
-            /// Not all devices support volume changes.
-            /// You can determine whether a device supports it by querying the device using the midiOutGetDevCaps function and the MIDICAPS_VOLUME flag.
-            /// 
-            /// You can also determine whether the device supports volume control on both the left and right channels by querying the device using the midiOutGetDevCaps function and the MIDICAPS_LRVOLUME flag.
-            /// 
-            /// Devices that do not support a full 16 bits of volume-level control use the high-order bits of the requested volume setting.
-            /// For example, a device that supports 4 bits of volume control produces the same volume setting for the following volume-level values: 0x4000, 0x43be, and 0x4fff.
-            /// The midiOutGetVolume function returns the full 16-bit value, as set by midiOutSetVolume, irrespective of the device's capabilities.
-            /// 
-            /// Volume settings are interpreted logarithmically.
-            /// This means that the perceived increase in volume is the same when increasing the volume level from 0x5000 to 0x6000 as it is from 0x4000 to 0x5000.
-
-            //midiOutSetVolume((HMIDIOUT)dwUser, 0x0000);
-            return MMSYSERR_NOERROR;
 
         default:
             return MMSYSERR_NOERROR;

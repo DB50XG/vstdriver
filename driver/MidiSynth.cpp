@@ -252,6 +252,7 @@ namespace VSTMIDIDRV
 
             GetModuleFileName(hinst_vst_driver, installpath, MAX_PATH);
             PathRemoveFileSpec(installpath);
+            lstrcat(installpath, _T("\\vstmididrv"));
 
             // Load Bass Asio
             lstrcat(bassasiopath, installpath);
@@ -316,7 +317,7 @@ namespace VSTMIDIDRV
 
             if (bassasio)
             {
-                if (!BASS_ASIO_Init(1, BASS_ASIO_THREAD))
+                if (!BASS_ASIO_Init(0, BASS_ASIO_THREAD))
                     //if (!BASS_ASIO_Init(0, BASS_ASIO_THREAD))
                 {
                     return 2;
@@ -330,10 +331,10 @@ namespace VSTMIDIDRV
                 //}
 
                 // Stop ASIO device in case it was playing
-                if (BASS_ASIO_IsStarted)
-                {
-                    BASS_ASIO_Stop();
-                }
+                //if (BASS_ASIO_IsStarted)
+                //{
+                //    BASS_ASIO_Stop();
+                //}
                 // Disable inputs in preparation for playing
                 //BASS_ASIO_ChannelReset(TRUE, -1, BASS_ASIO_RESET_ENABLE);
 
