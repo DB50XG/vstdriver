@@ -61,24 +61,28 @@
     <IntDir>Debug</IntDir>
     <OutDir>Debug</OutDir>
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Repos\DB50XG\vstdriver\drivercfg\wtl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)wtl\include;$(IncludePath)</IncludePath>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IntDir>Release</IntDir>
     <OutDir>Release</OutDir>
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Repos\DB50XG\vstdriver\drivercfg\wtl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)wtl\include;$(IncludePath)</IncludePath>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IntDir>Release</IntDir>
     <OutDir>Release</OutDir>
     <LinkIncremental>false</LinkIncremental>
     <LibraryPath>$(LibraryPath)</LibraryPath>
-    <IncludePath>C:\Repos\DB50XG\vstdriver\drivercfg\wtl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)wtl\include;$(IncludePath)</IncludePath>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Repos\DB50XG\vstdriver\drivercfg\wtl\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)wtl\include;$(IncludePath)</IncludePath>
+    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -116,6 +120,9 @@
       <DllDataFileName>
       </DllDataFileName>
     </Midl>
+    <PostBuildEvent>
+      <Command>XCOPY /Y "$(SolutionDir)..\output\vstmididrvcfg.exe" "C:\Windows\SysWOW64\vstmididrv\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -156,6 +163,9 @@
       <DllDataFileName>
       </DllDataFileName>
     </Midl>
+    <PostBuildEvent>
+      <Command>XCOPY /Y "$(SolutionDir)..\output\vstmididrvcfg.exe" "C:\Windows\SysWOW64\vstmididrv\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -191,11 +201,17 @@
       <DllDataFileName>
       </DllDataFileName>
     </Midl>
+    <PostBuildEvent>
+      <Command>XCOPY /Y "$(SolutionDir)..\output\64\vstmididrvcfg.exe" "C:\Windows\System32\vstmididrv\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>XCOPY /Y "$(SolutionDir)..\output\64\vstmididrvcfg.exe" "C:\Windows\System32\vstmididrv\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\driver\VSTDriver.cpp">
