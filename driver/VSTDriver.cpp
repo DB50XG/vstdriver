@@ -356,7 +356,10 @@ bool VSTDriver::process_create(uint32_t** error)
 
 	szCmdLine += my_path;
 	szCmdLine.resize(szCmdLine.find_last_of('\\') + 1);
-	szCmdLine += L"vstmididrv\\";
+	if (szCmdLine.find(L"vstmididrv\\") == std::string::npos)
+	{
+		szCmdLine += L"vstmididrv\\";
+	}
 	szCmdLine += (uPluginPlatform == 64) ? L"vsthost64.exe" : L"vsthost32.exe";
 	szCmdLine += L"\" \"";
 	szCmdLine += szPluginPath;
@@ -813,7 +816,7 @@ void VSTDriver::Render(short* samples, int len, float volume)
 	{
 		int len_todo = len > 512 ? 512 : len;
 		RenderFloat(float_out, len_todo, volume);
-		for (int i = 0; i < len_todo * audioOutputs; ++i)
+		for (unsigned i = 0; i < len_todo * audioOutputs; ++i)
 		{
 			int sample = (float_out[i] * 32768.f);
 			if ((sample + 0x8000) & 0xFFFF0000)
