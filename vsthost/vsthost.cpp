@@ -80,7 +80,7 @@ void FreeMidiEventChain()
     while (ev)
     {
         MidiEvent* next = ev->next;
-        if (ev->port && ev->ev.sysexEvent.type == kVstSysExType)
+        if (ev->port && ev->ev.sysexEvent.type == VstEventTypes::kVstSysExType)
         {
             free(ev->ev.sysexEvent.sysexDump);
         }
@@ -189,7 +189,7 @@ void GetChunk(AEffect* pEffect, vector<uint8_t>& out)
     out.resize(0);
     uint32_t unique_id = pEffect->uniqueID;
     append_be(out, unique_id);
-    bool type_chunked = !!(pEffect->flags & effFlagsProgramChunks);
+    bool type_chunked = !!(pEffect->flags & VstAEffectFlags::effFlagsProgramChunks);
     append_be(out, type_chunked);
     if (!type_chunked)
     {
@@ -204,7 +204,7 @@ void GetChunk(AEffect* pEffect, vector<uint8_t>& out)
     else
     {
         void* chunk;
-        uint32_t size = pEffect->dispatcher(pEffect, effGetChunk, 0, 0, &chunk, 0);
+        uint32_t size = pEffect->dispatcher(pEffect, AEffectOpcodes::effGetChunk, 0, 0, &chunk, 0);
         append_be(out, size);
         size_t chunk_size = out.size();
         out.resize(chunk_size + size);
@@ -228,7 +228,7 @@ void SetChunk(AEffect* pEffect, vector<uint8_t> const& in)
         bool type_chunked;
         retrieve_be(type_chunked, inc, size);
 
-        if (type_chunked != !!(pEffect->flags & effFlagsProgramChunks))
+        if (type_chunked != !!(pEffect->flags & VstAEffectFlags::effFlagsProgramChunks))
         {
             return;
         }
@@ -237,7 +237,10 @@ void SetChunk(AEffect* pEffect, vector<uint8_t> const& in)
         {
             uint32_t num_params;
             retrieve_be(num_params, inc, size);
-            if (num_params != pEffect->numParams) return;
+            if (num_params != pEffect->numParams)
+            {
+                return;
+            }
             for (unsigned i = 0; i < num_params; ++i)
             {
                 float parameter;
@@ -249,8 +252,11 @@ void SetChunk(AEffect* pEffect, vector<uint8_t> const& in)
         {
             uint32_t chunk_size;
             retrieve_be(chunk_size, inc, size);
-            if (chunk_size > size) return;
-            pEffect->dispatcher(pEffect, effSetChunk, 0, chunk_size, (void*)inc, 0);
+            if (chunk_size > size)
+            {
+                return;
+            }
+            pEffect->dispatcher(pEffect, AEffectOpcodes::effSetChunk, 0, chunk_size, (void*)inc, 0);
         }
     }
 }
@@ -278,7 +284,7 @@ INT_PTR CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if (effect)
             {
                 char product[VstStringConstants::kVstMaxProductStrLen] = { 0 };
-                effect->dispatcher(effect, effGetProductString, 0, 0, &product, 0);
+                effect->dispatcher(effect, AEffectXOpcodes::effGetProductString, 0, 0, &product, 0);
 
                 SetWindowTextA(hwnd, (LPCSTR)product);
 
@@ -341,7 +347,10 @@ struct audioMasterData
 static VstIntPtr VSTCALLBACK audioMaster(AEffect* effect, VstInt32 opcode, VstInt32 index, VstIntPtr value, void* ptr, float opt)
 {
     audioMasterData* data = NULL;
-    if (effect) data = (audioMasterData*)effect->user;
+    if (effect)
+    {
+        data = (audioMasterData*)effect->user;
+    }
 
     switch (opcode)
     {
@@ -569,9 +578,9 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     }
 
     pEffect->user = &effectData;
-    pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
+    pEffect->dispatcher(pEffect, AEffectOpcodes::effOpen, 0, 0, 0, 0);
 
-    if (pEffect->dispatcher(pEffect, effGetPlugCategory, 0, 0, 0, 0) != kPlugCategSynth || pEffect->dispatcher(pEffect, effCanDo, 0, 0, (void*)"receiveVstMidiEvent", 0) < 1)
+    if (pEffect->dispatcher(pEffect, AEffectXOpcodes::effGetPlugCategory, 0, 0, 0, 0) != kPlugCategSynth || pEffect->dispatcher(pEffect, AEffectXOpcodes::effCanDo, 0, 0, (void*)"receiveVstMidiEvent", 0) < 1)
     {
         code = Response::VstiIsNotAMidiSynth;
         goto exit;
@@ -584,15 +593,15 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
     {
         char effectName[VstStringConstants::kVstMaxEffectNameLen] = { 0 };
-        pEffect->dispatcher(pEffect, effGetEffectName, 0, 0, &effectName, 0);
+        pEffect->dispatcher(pEffect, AEffectXOpcodes::effGetEffectName, 0, 0, &effectName, 0);
 
         char vendor[VstStringConstants::kVstMaxVendorStrLen] = { 0 };
-        pEffect->dispatcher(pEffect, effGetVendorString, 0, 0, &vendor, 0);
+        pEffect->dispatcher(pEffect, AEffectXOpcodes::effGetVendorString, 0, 0, &vendor, 0);
 
         char product[VstStringConstants::kVstMaxProductStrLen] = { 0 };
-        pEffect->dispatcher(pEffect, effGetProductString, 0, 0, &product, 0);
+        pEffect->dispatcher(pEffect, AEffectXOpcodes::effGetProductString, 0, 0, &product, 0);
 
-        uint32_t vendorVersion = pEffect->dispatcher(pEffect, effGetVendorVersion, 0, 0, 0, 0);
+        uint32_t vendorVersion = pEffect->dispatcher(pEffect, AEffectXOpcodes::effGetVendorVersion, 0, 0, 0, 0);
         uint32_t uniqueId = pEffect->uniqueID;
 
         SendData(Response::NoError);
@@ -688,8 +697,11 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
             case Command::Reset:
             {
-                if (blState.size()) pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
-                pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
+                if (blState.size())
+                {
+                    pEffect->dispatcher(pEffect, AEffectXOpcodes::effStopProcess, 0, 0, 0, 0);
+                }
+                pEffect->dispatcher(pEffect, AEffectOpcodes::effClose, 0, 0, 0, 0);
 
                 blState.resize(0);
 
@@ -702,7 +714,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                     goto exit;
                 }
                 pEffect->user = &effectData;
-                pEffect->dispatcher(pEffect, effOpen, 0, 0, 0, 0);
+                pEffect->dispatcher(pEffect, AEffectOpcodes::effOpen, 0, 0, 0, 0);
                 SetChunk(pEffect, chunk);
 
                 SendData(0u);
@@ -741,16 +753,25 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             case Command::SendMidiSystemExclusiveEvent:
             {
                 MidiEvent* ev = (MidiEvent*)calloc(sizeof(MidiEvent), 1);
-                if (evTail) evTail->next = ev;
+                if (evTail)
+                {
+                    evTail->next = ev;
+                }
                 evTail = ev;
-                if (!evChain) evChain = ev;
+                if (!evChain)
+                {
+                    evChain = ev;
+                }
 
                 uint32_t size = ReceiveData();
                 uint32_t port = size >> 24;
                 size &= 0xFFFFFF;
 
                 ev->port = port;
-                if (ev->port > 2) ev->port = 2;
+                if (ev->port > 2)
+                {
+                    ev->port = 2;
+                }
                 ev->ev.sysexEvent.type = kVstSysExType;
                 ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
                 ev->ev.sysexEvent.dumpBytes = size;
@@ -766,10 +787,10 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             {
                 if (!blState.size())
                 {
-                    pEffect->dispatcher(pEffect, effSetSampleRate, 0, 0, 0, float(sampleRate));
-                    pEffect->dispatcher(pEffect, effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
-                    pEffect->dispatcher(pEffect, effMainsChanged, 0, 1, 0, 0);
-                    pEffect->dispatcher(pEffect, effStartProcess, 0, 0, 0, 0);
+                    pEffect->dispatcher(pEffect, AEffectOpcodes::effSetSampleRate, 0, 0, 0, float(sampleRate));
+                    pEffect->dispatcher(pEffect, AEffectOpcodes::effSetBlockSize, 0, BUFFER_SIZE, 0, 0);
+                    pEffect->dispatcher(pEffect, AEffectOpcodes::effMainsChanged, 0, 1, 0, 0);
+                    pEffect->dispatcher(pEffect, AEffectXOpcodes::effStartProcess, 0, 0, 0, 0);
 
                     size_t buffer_size = sizeof(float*) * (pEffect->numInputs + audioOutputs * 3);   // float lists (inputs + outputs)
                     buffer_size += sizeof(float) * BUFFER_SIZE;                                         // null input
@@ -847,7 +868,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                             ev = ev->next;
                         }
 
-                        pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events, 0);
+                        pEffect->dispatcher(pEffect, AEffectXOpcodes::effProcessEvents, 0, 0, events, 0);
                     }
                 }
 
@@ -857,7 +878,10 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
                     if (!idle_started)
                     {
-                        if (events) pEffect->dispatcher(pEffect, effProcessEvents, 0, 0, events, 0);
+                        if (events)
+                        {
+                            pEffect->dispatcher(pEffect, AEffectXOpcodes::effProcessEvents, 0, 0, events, 0);
+                        }
 
                         idle_started = true;
                     }
@@ -918,8 +942,12 @@ exit:
 
     if (pEffect)
     {
-        if (blState.size()) pEffect->dispatcher(pEffect, effStopProcess, 0, 0, 0, 0);
-        pEffect->dispatcher(pEffect, effClose, 0, 0, 0, 0);
+        if (blState.size())
+        {
+            pEffect->dispatcher(pEffect, AEffectXOpcodes::effStopProcess, 0, 0, 0, 0);
+        }
+
+        pEffect->dispatcher(pEffect, AEffectOpcodes::effClose, 0, 0, 0, 0);
     }
 
     FreeMidiEventChain();
