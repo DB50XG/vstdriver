@@ -742,7 +742,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 {
                     ev->port = 2;
                 }
-                ev->ev.midiEvent.type = kVstMidiType;
+                ev->ev.midiEvent.type = VstEventTypes::kVstMidiType;
                 ev->ev.midiEvent.byteSize = sizeof(ev->ev.midiEvent);
                 memcpy(&ev->ev.midiEvent.midiData, &b, 3);
 
@@ -772,7 +772,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
                 {
                     ev->port = 2;
                 }
-                ev->ev.sysexEvent.type = kVstSysExType;
+                ev->ev.sysexEvent.type = VstEventTypes::kVstSysExType;
                 ev->ev.sysexEvent.byteSize = sizeof(ev->ev.sysexEvent);
                 ev->ev.sysexEvent.dumpBytes = size;
                 ev->ev.sysexEvent.sysexDump = (char*)malloc(size);
