@@ -659,7 +659,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
             case Command::HasEditor:
             {
-                uint32_t hasEditor = pEffect->flags & effFlagsHasEditor;
+                uint32_t hasEditor = pEffect->flags & VstAEffectFlags::effFlagsHasEditor;
 
                 SendData(0u);
                 SendData(hasEditor);
@@ -668,7 +668,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
             case Command::DisplayEditorModal:
             {
-                if (pEffect->flags & effFlagsHasEditor)
+                if (pEffect->flags & VstAEffectFlags::effFlagsHasEditor)
                 {
                     MyDLGTEMPLATE vstiEditor;
                     vstiEditor.style = WS_POPUPWINDOW | WS_DLGFRAME | DS_MODALFRAME | DS_CENTER;
