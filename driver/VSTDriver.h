@@ -98,7 +98,9 @@ public:
 
     // configuration
     void GetChunk(std::vector<uint8_t>& out);
-    void SetChunk(const void* in, unsigned size);
+    bool SetChunk(const void* in, unsigned size);
+    bool SetChunk(std::vector<std::uint8_t> blChunk);
+    bool SetSampleRate(uint32_t sampleRate);
 
     // editor
     bool HasEditor();

@@ -287,10 +287,20 @@ bool VSTDriver::connect_pipe(HANDLE hPipe)
 	if (!ConnectNamedPipe(hPipe, &ol))
 	{
 		DWORD error = GetLastError();
-		if (error == ERROR_PIPE_CONNECTED) return true;
-		if (error != ERROR_IO_PENDING) return false;
+		if (error == ERROR_PIPE_CONNECTED)
+		{
+			return true;
+		}
 
-		if (WaitForSingleObject(hReadEvent, 10000) == WAIT_TIMEOUT) return false;
+		if (error != ERROR_IO_PENDING)
+		{
+			return false;
+		}
+
+		if (WaitForSingleObject(hReadEvent, 10000) == WAIT_TIMEOUT)
+		{
+			return false;
+		}
 	}
 	return true;
 }
@@ -416,8 +426,6 @@ bool VSTDriver::process_create(uint32_t** error)
 		*error = new uint32_t(status);
 		return false;
 	}
-
-	/// TO DO - Use serialization object
 
 	uint32_t effectNameLength = ReceiveData();
 	uint32_t vendorLength = ReceiveData();
@@ -641,60 +649,6 @@ long VSTDriver::GetUniqueID()
 	return uniqueId;
 }
 
-void VSTDriver::GetChunk(vector<uint8_t>& out)
-{
-	SendData(Command::GetChunkData);
-
-	uint32_t code = ReceiveData();
-
-	if (code == 0)
-	{
-		uint32_t size = ReceiveData();
-
-		out.resize(size);
-
-		ReceiveData(&out[0], size);
-	}
-	else
-	{
-		process_terminate();
-	}
-}
-
-void VSTDriver::SetChunk(const void* in, unsigned size)
-{
-	SendData(Command::SetChunkData);
-	SendData(size);
-	SendData(in, size);
-	if (ReceiveData())
-	{
-		process_terminate();
-	}
-}
-
-bool VSTDriver::HasEditor()
-{
-	SendData(Command::VstiHasEditor);
-	uint32_t code = ReceiveData();
-	if (code != 0)
-	{
-		process_terminate();
-		return false;
-	}
-	code = ReceiveData();
-	return code != 0;
-}
-
-void VSTDriver::DisplayEditorModal()
-{
-	SendData(Command::DisplayEditorModal);
-	uint32_t code = ReceiveData();
-	if (code != 0)
-	{
-		process_terminate();
-	}
-}
-
 void VSTDriver::CloseVSTDriver()
 {
 	process_terminate();
@@ -718,23 +672,13 @@ bool VSTDriver::OpenVSTDriver(TCHAR* szPath, uint32_t** error)
 		return false;
 	}
 
-	SendData(Command::SetSampleRate);
-	SendData(sizeof(uint32_t));
-	SendData(44100);
-
-	if (ReceiveData())
+	if (!SetSampleRate(44100))
 	{
-		process_terminate();
 		return false;
 	}
 
-	SendData(Command::SetChunkData);
-	SendData(blChunk.size());
-	SendData(blChunk.data(), blChunk.size());
-
-	if (ReceiveData())
+	if (!SetChunk(blChunk))
 	{
-		process_terminate();
 		return false;
 	}
 
@@ -745,12 +689,83 @@ bool VSTDriver::OpenVSTDriver(TCHAR* szPath, uint32_t** error)
 	return true;
 }
 
+void VSTDriver::GetChunk(vector<uint8_t>& out)
+{
+	SendData(Command::GetChunkData);
+
+	if (ReceiveData())
+	{
+		process_terminate();
+	}
+	else
+	{
+		uint32_t size = ReceiveData();
+
+		out.resize(size);
+
+		ReceiveData(&out[0], size);
+	}
+}
+
+bool VSTDriver::SetChunk(const void* in, unsigned size)
+{
+	SendData(Command::SetChunkData);
+	SendData(size);
+	SendData(in, size);
+	if (ReceiveData())
+	{
+		process_terminate();
+		return false;
+	}
+	return true;
+}
+
+bool VSTDriver::SetChunk(std::vector<std::uint8_t> blChunk)
+{
+	return SetChunk(blChunk.data(), blChunk.size());
+}
+
+bool VSTDriver::HasEditor()
+{
+	SendData(Command::VstiHasEditor);
+
+	if (ReceiveData())
+	{
+		process_terminate();
+		return false;
+	}
+	return ReceiveData();
+}
+
+void VSTDriver::DisplayEditorModal()
+{
+	SendData(Command::DisplayEditorModal);
+
+	if (ReceiveData())
+	{
+		process_terminate();
+	}
+}
+
+bool VSTDriver::SetSampleRate(uint32_t sampleRate)
+{
+	SendData(Command::SetSampleRate);
+	SendData(sizeof(uint32_t));
+	SendData(sampleRate);
+
+	if (ReceiveData())
+	{
+		process_terminate();
+		return false;
+	}
+	return true;
+}
+
 void VSTDriver::ResetDriver()
 {
 	SendData(Command::Reset);
 
-	uint32_t code = ReceiveData();
-	if (code != 0)
+	if (ReceiveData())
 	{
 		process_terminate();
 	}
@@ -762,8 +777,7 @@ void VSTDriver::ProcessMIDIMessage(DWORD dwPort, DWORD dwParam1)
 	SendData(Command::SendMidiEvent);
 	SendData(dwParam1);
 
-	uint32_t code = ReceiveData();
-	if (code != 0)
+	if (ReceiveData())
 	{
 		process_terminate();
 	}
@@ -776,8 +790,10 @@ void VSTDriver::ProcessSysEx(DWORD dwPort, const unsigned char* sysexbuffer, int
 	SendData(dwPort);
 	SendData(sysexbuffer, exlen);
 
-	uint32_t code = ReceiveData();
-	if (code != 0) process_terminate();
+	if (ReceiveData())
+	{
+		process_terminate();
+	}
 }
 
 void VSTDriver::RenderFloat(float* samples, int len, float volume)
