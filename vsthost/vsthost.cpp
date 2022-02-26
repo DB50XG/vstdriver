@@ -526,7 +526,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     /// Initializes the COM library on the current thread and identifies the concurrency model as single-thread apartment (STA).
     if (FAILED(CoInitialize(NULL)))
     {
-        return Error::Comctl32LoadFailed;
+        return Error::ComStaInitializationFailed;
     }
 
 #ifndef _DEBUG
