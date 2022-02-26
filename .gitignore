@@ -43,8 +43,16 @@
 /vsthost/.vs
 /vsthost/*.dll
 /vsthost/*.exe
+/ummidiplg/Release
+/ummidiplg/ReleaseUnicode
+/ummidiplg/*.vcxproj.user
+/installer.vcxproj.user
+/Debug
+/Release
+/ReleaseUnicode
 /output/
 git_ver.h
 vstmididrv.exe
 vstmididrv.exe.asc
 /.vs
+/x64
