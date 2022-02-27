@@ -365,4 +365,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+	<Target Name="BuildFunction" AfterTargets="Build" Condition="'$(Platform)'=='Win32'">
+		<MSBuild Projects="$(MSBuildProjectFile)" Properties="Platform=x64;PlatFormTarget=x64" RunEachTargetSeparately="true"  />
+	</Target>
 </Project>
