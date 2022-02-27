@@ -15,7 +15,10 @@ env:
 jobs:
   build:
     runs-on: windows-latest
-
+    strategy:
+      matrix:
+        configurations: [ReleaseUnicode, Release]
+        
     steps:
     - uses: actions/checkout@v2
 
