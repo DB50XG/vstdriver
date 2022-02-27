@@ -64,7 +64,6 @@ clean:
 $(TARGET): vstmididrv.mak \
         vstmididrv.nsi \
         Release\ummidiplg.dll \
-        ReleaseUnicode\ummidiplg.dll \
         output\vstmididrv.dll \
         output\vsthost32.exe \
         output\vstmididrvcfg.exe \

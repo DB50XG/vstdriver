@@ -5,12 +5,7 @@
 Name "VST MIDI System Synth"
 
 ;Directory of User-Mode MIDI Registration PlugIn
-!ifdef NSIS_UNICODE
-  ; necessary for NSIS >= 3.07 which defaults to Unicode
-  !addplugindir ReleaseUnicode
-!else
-  !addplugindir Release
-!endif
+!addplugindir Release
 
 !ifdef INNER
   !echo "Inner invocation"
