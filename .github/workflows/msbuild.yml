@@ -22,17 +22,28 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+      
+    - name: Install NSIS
+      run: |
+        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
+        scoop bucket add extras
+        scoop install nsis
+        
+    - name: Print NSIS version
+      run: makensis -VERSION
+    - name: Print NSIS compile flags
+      run: makensis -HDRINFO
       
     - name: Download LockedList
       run: |
         mkdir ${env:GITHUB_WORKSPACE}\LockedList
         curl -O https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip
-      
-    - name: action-zip
-      uses: montudor/action-zip@v1.0.0
-    - uses: montudor/action-zip@v1
-      with:
-        args: zip -qq -r ${env:GITHUB_WORKSPACE}\LockedList.zip ${env:ProgramFiles(x86)}\nsis
+    
+    - name: Extract LockedList dll files
+      run: 7z x ${env:GITHUB_WORKSPACE}\LockedList\LockedList.zip -o ${env:ProgramFiles(x86)}\nsis
         
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
