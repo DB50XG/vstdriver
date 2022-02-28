@@ -42,4 +42,3 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
 ## To-Do
 <li>Add ASIO / WASAPI selector in VSTi Driver Configuration</li>
-<li>Installer</li>
