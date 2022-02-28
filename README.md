@@ -36,6 +36,3 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 ![image](https://user-images.githubusercontent.com/100102043/155243242-4c409017-0686-4382-828f-9c599fd186ef.png)
 
 <li>ASIO support via BassAsio</li>
-
-## To-Do
-<li>Add ASIO / WASAPI selector in VSTi Driver Configuration</li>
