@@ -38,7 +38,7 @@ jobs:
       run: makensis -HDRINFO
       
     - name: Download LockedList
-      run: curl https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip -o ${env:GITHUB_WORKSPACE}
+      run: curl https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip -o ${env:GITHUB_WORKSPACE}\
       
     - name: action-zip
       uses: montudor/action-zip@v1.0.0
