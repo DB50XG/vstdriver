@@ -3,7 +3,8 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
 <code>Copyright (C) 2011 Chris Moeller, Brad Miller</code><br>
 <code>Copyright (C) 2011, 2012 Sergey V. Mikayev</code><br>
-<code>Copyright (C) 2013-2022 Christopher Snowhill (kode54)</code>
+<code>Copyright (C) 2013-2022 Christopher Snowhill (kode54)</code><br>
+<code>Copyright (C) 2021 Hermann Seib</code>
 
 <details>
  <summary>History</summary>
