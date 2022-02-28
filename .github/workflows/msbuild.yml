@@ -22,20 +22,6 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
-    - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
-      
-    - name: Install NSIS
-      run: |
-        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-        scoop bucket add extras
-        scoop install nsis
-        
-    - name: Print NSIS version
-      run: makensis -VERSION
-    - name: Print NSIS compile flags
-      run: makensis -HDRINFO
       
     - name: Download LockedList
       run: curl https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip -o ${env:GITHUB_WORKSPACE}\
