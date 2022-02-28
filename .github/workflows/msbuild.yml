@@ -38,13 +38,13 @@ jobs:
       run: makensis -HDRINFO
       
     - name: Download LockedList
-      run: curl https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip -o /
+      run: curl https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip -o ${env:RUNNER_TEMP}
       
     - name: action-zip
       uses: montudor/action-zip@v1.0.0
     - uses: montudor/action-zip@v1
       with:
-        args: zip -qq -r LockedList.zip ${env:ProgramFiles(x86)}/nsis
+        args: zip -qq -r ${env:RUNNER_TEMP}/LockedList.zip ${env:ProgramFiles(x86)}/nsis
         
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
