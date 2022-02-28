@@ -9,19 +9,15 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 <details>
  <summary>History</summary>
   <i>
-   I discovered this driver in May 2020.
+   I discovered this driver in May 2020 and at the end of 2020 I decided to add ASIO support and fix the broken VSTi settings persistence.
    
-   At the end of 2020 I decided to add ASIO support and fix the broken VSTi settings persistence.
+   ASIO support was added by using BassAsio and the VSTi settings persistance was fixed by saving the chunks to the Windows registry.
    
-   The VSTi settings persistance was fixed by saving the chunks to the Windows registry.
-   
-   At the end of July 2021 the only missing fix was the installer which I wanted to take from another project and then make it public.
+   At the end of July 2021 the only missing fix was the installer which I wanted to take from the munt project and then make it public.
    
    Unfortunately at this point I lost the code completely.
    
-   I'm trying to get to the same refactoring point by using 2-3 months earlier version of the project.
-   
-   For now, you can use the installer from <a href="https://github.com/Arakula/vstdriver/releases/tag/v1.0.0-alpha3">Arakula</a> and replace the files manually.
+   While I'm still trying to get to the same refactoring point, most of it is done and the Hermann Seib installer is included. 
   </i>
   
 </details>
