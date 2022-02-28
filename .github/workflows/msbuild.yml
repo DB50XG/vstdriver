@@ -43,7 +43,7 @@ jobs:
         curl -O https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip
     
     - name: Extract LockedList dll files
-      run: Expand-Archive -LiteralPath ${env:GITHUB_WORKSPACE}\LockedList\LockedList.zip -DestinationPath ${env:ProgramFiles(x86)}\nsis
+      run: Expand-Archive -LiteralPath LockedList.zip -DestinationPath ${env:ProgramFiles(x86)}\nsis
         
     - name: Build
       working-directory: ${{env.GITHUB_WORKSPACE}}
