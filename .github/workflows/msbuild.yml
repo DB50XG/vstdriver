@@ -24,7 +24,9 @@ jobs:
 
       
     - name: Download LockedList
-      run: curl https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip -o ${env:GITHUB_WORKSPACE}\
+      run: |
+        mkdir ${env:GITHUB_WORKSPACE}\LockedList
+        curl -O https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip
       
     - name: action-zip
       uses: montudor/action-zip@v1.0.0
