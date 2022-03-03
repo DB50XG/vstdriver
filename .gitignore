@@ -29,6 +29,7 @@
 /drivercfg/*.exe
 /drivercfg/x64
 /drivercfg/.vs
+/drivercfg/*.aps
 /vsthost/*.opensdf
 /vsthost/*.sdf
 /vsthost/*.vcxproj.user

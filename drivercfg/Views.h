@@ -8,6 +8,22 @@
 #include "../external_packages/mmddk.h"
 #include "../driver/VSTDriver.h"
 
+/// Define BASS functions as pointers
+#define BASSDEF(f) (WINAPI *f)
+#define LOADBASSFUNCTION(f) *((void**)&f)=GetProcAddress(bass,#f)
+
+/// Define BASSASIO functions as pointers
+#define BASSASIODEF(f) (WINAPI *f)
+#define LOADBASSASIOFUNCTION(f) *((void**)&f)=GetProcAddress(bassasio,#f)
+
+/// Define BASSWASAPI functions as pointers
+#define BASSWASAPIDEF(f) (WINAPI *f)
+#define LOADBASSWASAPIFUNCTION(f) *((void**)&f)=GetProcAddress(basswasapi,#f)
+
+#include "bass.h"
+#include "bassasio.h"
+#include "basswasapi.h"
+
 using namespace std;
 using namespace utf8util;
 
@@ -268,7 +284,7 @@ public:
         vst_product = GetDlgItem(IDC_PRODUCT);
 
         vst_info.SetWindowText(L"No VSTi loaded");
-        
+
         LoadSettings();
 
         InitializeToolTips();
@@ -279,10 +295,10 @@ public:
     void InitializeToolTips()
     {
         HWND m_hWnd = GetAncestor(this->m_hWnd, GA_ROOT);
-        CreateToolTip(IDC_VSTLOAD, m_hWnd, L"Select VSTi dll to load");
-        CreateToolTip(IDC_VSTLOADED, m_hWnd, L"The currently loaded VSTi dll");
+        CreateToolTip(IDC_VSTLOAD, m_hWnd, L"Select the dll file of a VSTi to load");
+        CreateToolTip(IDC_VSTLOADED, m_hWnd, L"The currently loaded dll file of a VSTi");
     }
-    
+
     /// <summary>
     /// Creates a tooltip for an item in a dialog box.
     /// </summary>
@@ -326,7 +342,379 @@ public:
     }
 };
 
+class CView3 : public CDialogImpl<CView3>
+{
+    CListBox playbackDevices;
+    CComboBox driverMode;
 
+    HINSTANCE   bass;			// bass handle
+    HINSTANCE   bassasio;       // bassasio handle
+    HINSTANCE   basswasapi;		// basswasapi handle
+
+    bool isAsio = false;
+    bool isWasapi = false;
+
+public:
+    enum
+    {
+        IDD = IDD_SOUND
+    };
+
+    BEGIN_MSG_MAP(CView3)
+        MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialogView3)
+        COMMAND_HANDLER(IDC_COMBO1, CBN_SELCHANGE, OnCbnSelchangeCombo1)
+        COMMAND_HANDLER(IDC_LIST1, LBN_SELCHANGE, OnLbnSelchangeList1)
+    END_MSG_MAP()
+
+    CView3()
+    {
+        LoadBass();
+    }
+
+    ~CView3()
+    {
+        if (bassasio)
+        {
+            // Stop ASIO device in case it was playing
+            if (BASS_ASIO_IsStarted)
+            {
+                BASS_ASIO_Stop();
+            }
+            BASS_ASIO_Free();
+
+            FreeLibrary(bassasio);
+            bassasio = NULL;
+        }
+
+        if (basswasapi)
+        {
+            BASS_WASAPI_Stop(TRUE);
+            BASS_WASAPI_Free();
+            FreeLibrary(basswasapi);
+            basswasapi = NULL;
+        }
+
+        if (bass)
+        {
+            BASS_Free();
+            FreeLibrary(bass);
+            bass = NULL;
+        }
+    }
+
+    void LoadBass()
+    {
+        TCHAR installpath[MAX_PATH]{};
+        TCHAR basspath[MAX_PATH]{};
+        TCHAR basswasapipath[MAX_PATH]{};
+        TCHAR bassasiopath[MAX_PATH]{};
+
+        GetModuleFileName(hinst_vst_driver, installpath, MAX_PATH);
+        PathRemoveFileSpec(installpath);
+
+        // Load Bass
+        lstrcat(basspath, installpath);
+        lstrcat(basspath, L"\\bass.dll");
+        bass = LoadLibrary(basspath);
+
+        // Load Bass Asio
+        lstrcat(bassasiopath, installpath);
+        lstrcat(bassasiopath, L"\\bassasio.dll");
+        bassasio = LoadLibrary(bassasiopath);
+
+        // Load Bass Wasapi
+        lstrcat(basswasapipath, installpath);
+        lstrcat(basswasapipath, L"\\basswasapi.dll");
+        basswasapi = LoadLibrary(basswasapipath);
+
+        if (bass)
+        {
+            LOADBASSFUNCTION(BASS_GetDeviceInfo);
+            LOADBASSFUNCTION(BASS_Free);
+
+            if (basswasapi)
+            {
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_Stop);
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_Free);
+                isWasapi = true;
+            }
+        }
+
+        if (bassasio)
+        {
+            LOADBASSASIOFUNCTION(BASS_ASIO_Init);
+            LOADBASSASIOFUNCTION(BASS_ASIO_GetInfo);
+            LOADBASSASIOFUNCTION(BASS_ASIO_GetDevice);
+            LOADBASSASIOFUNCTION(BASS_ASIO_SetDevice);
+            LOADBASSASIOFUNCTION(BASS_ASIO_GetDeviceInfo);
+            LOADBASSASIOFUNCTION(BASS_ASIO_Free);
+            LOADBASSASIOFUNCTION(BASS_ASIO_IsStarted);
+            LOADBASSASIOFUNCTION(BASS_ASIO_Stop);
+            LOADBASSASIOFUNCTION(BASS_ASIO_GetRate);
+            LOADBASSASIOFUNCTION(BASS_ASIO_ChannelGetInfo);
+
+            /// Check if there is at least one ASIO capable device
+            if (BASS_ASIO_Init(-1, BASS_ASIO_THREAD))
+            {
+                isAsio = true;
+                BASS_ASIO_Free();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Load the output drivers for WASAPI driver mode
+    /// </summary>
+    void LoadWasapiDrivers()
+    {
+        CString deviceItem;
+        CString selectedOutputDriver = LoadOutputDriverWasapi();
+
+        BASS_DEVICEINFO deviceInfo{};
+
+        for (size_t deviceId = 1; BASS_GetDeviceInfo(deviceId, &deviceInfo); ++deviceId)
+        {
+            deviceItem.Format(L"%s", CString(deviceInfo.name));
+
+            if (CString(deviceInfo.driver).IsEmpty())
+            {
+                continue;
+            }
+
+            playbackDevices.AddString(deviceItem);
+
+            if (selectedOutputDriver.IsEmpty() && (deviceInfo.flags & BASS_DEVICE_DEFAULT))
+            {
+                playbackDevices.SelectString(0, deviceItem);
+            }
+            else
+            {
+                playbackDevices.SelectString(0, selectedOutputDriver);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Load the output drivers for ASIO driver mode
+    /// </summary>
+    void LoadAsioDrivers()
+    {
+        CString deviceItem;
+        CString deviceName;
+        CString selectedOutputDriver = LoadOutputDriverAsio();
+
+        BASS_ASIO_DEVICEINFO asioDeviceInfo{};
+
+        for (size_t deviceId = 0; BASS_ASIO_Init(deviceId, BASS_ASIO_THREAD); ++deviceId)
+        {
+            BASS_ASIO_GetDeviceInfo(deviceId, &asioDeviceInfo);
+
+            deviceName = CString(asioDeviceInfo.name);
+
+            BASS_ASIO_CHANNELINFO channelInfo{};
+
+            for (size_t channel = 0; BASS_ASIO_ChannelGetInfo(FALSE, channel, &channelInfo); ++channel)
+            {
+                deviceItem.Format(L"%s %s", deviceName, CString(channelInfo.name));
+                if (playbackDevices.FindStringExact(0, deviceItem) == LB_ERR)
+                {
+                    playbackDevices.AddString(deviceItem);
+                    if ((selectedOutputDriver.IsEmpty() && channel == 0) || deviceItem.CompareNoCase(selectedOutputDriver) == 0)
+                    {
+                        /// Select the first ASIO channel if there is no user selection yet
+                        playbackDevices.SelectString(0, deviceItem);
+                    }
+                }
+            }
+
+            BASS_ASIO_Free();
+        }
+    }
+
+    /// <summary>
+    /// Save Output Driver settings
+    /// </summary>
+    bool SaveOutputDriver(CString valueName, CString value)
+    {
+        CRegKeyEx reg;
+
+        /// Create the Output Driver registry subkey
+        long result = reg.Create(HKEY_CURRENT_USER, L"Software\\VSTi Driver\\Output Driver", 0, 0, KEY_WRITE | KEY_WOW64_32KEY);
+
+        if (result != NO_ERROR)
+        {
+            return false;
+        }
+
+        /// Save the OutputDriver settings
+        result = reg.SetStringValue(valueName, value);
+
+        reg.Close();
+
+        return result == NO_ERROR;
+    }
+
+    bool SaveOutputDriverAsio(CString outputDriver)
+    {
+        return SaveOutputDriver(L"ASIO", outputDriver);
+    }
+
+    bool SaveOutputDriverWasapi(CString outputDriver)
+    {
+        return SaveOutputDriver(L"WASAPI", outputDriver);
+    }
+
+    bool SaveDriverMode(CString driverMode)
+    {
+        return SaveOutputDriver(L"Mode", driverMode);
+    }
+
+    CString LoadOutputDriver(CString valueName)
+    {
+        CRegKeyEx reg;
+        CString value;
+
+        long result = reg.Open(HKEY_CURRENT_USER, L"Software\\VSTi Driver\\Output Driver", KEY_READ | KEY_WOW64_32KEY);
+        if (result != NO_ERROR)
+        {
+            return value;
+        }
+
+        ULONG size;
+
+        result = reg.QueryStringValue(valueName, NULL, &size);
+        if (result == NO_ERROR && size > 0)
+        {
+            reg.QueryStringValue(valueName, value.GetBuffer(size), &size);
+            value.ReleaseBuffer();
+        }
+
+        reg.Close();
+
+        return value;
+    }
+
+    CString LoadOutputDriverAsio()
+    {
+        return LoadOutputDriver(L"ASIO");
+    }
+
+    CString LoadOutputDriverWasapi()
+    {
+        return LoadOutputDriver(L"WASAPI");
+    }
+
+    CString LoadDriverMode()
+    {
+        return LoadOutputDriver(L"Mode");
+    }
+
+    LRESULT OnInitDialogView3(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
+    {
+        playbackDevices = GetDlgItem(IDC_LIST1);
+
+        driverMode = GetDlgItem(IDC_COMBO1);
+
+        driverMode.AddString(L"WASAPI");
+        driverMode.SelectString(0, L"WASAPI");
+
+        CString selectedDriverMode = LoadDriverMode();
+
+        if (selectedDriverMode.IsEmpty())
+        {
+            selectedDriverMode = L"ASIO";
+        }
+
+        if (isAsio)
+        {
+            driverMode.AddString(L"ASIO");
+            driverMode.EnableWindow(true);
+
+            if (selectedDriverMode.CompareNoCase(L"ASIO") == 0)
+            {
+                driverMode.SelectString(0, L"ASIO");
+                LoadAsioDrivers();
+            }
+            else
+            {
+                LoadWasapiDrivers();
+            }
+        }
+        else
+        {
+            LoadWasapiDrivers();
+        }
+
+        return 0;
+    }
+
+    LRESULT OnCbnSelchangeCombo1(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+    {
+        CString newDriverMode;
+        CString selectedDriverMode;
+
+        int index = driverMode.GetCurSel();
+        int length = driverMode.GetLBTextLen(index);
+
+        if (driverMode.GetLBText(index, newDriverMode.GetBuffer(length)))
+        {
+            newDriverMode.ReleaseBuffer();
+
+            selectedDriverMode = LoadDriverMode();
+
+            if (selectedDriverMode.CompareNoCase(newDriverMode) != 0)
+            {
+                playbackDevices.ResetContent();
+
+                if (newDriverMode.CompareNoCase(L"ASIO") == 0)
+                {
+                    LoadAsioDrivers();
+                }
+                else
+                {
+                    LoadWasapiDrivers();
+                }
+
+                SaveDriverMode(newDriverMode);
+            }
+        }
+
+        return 0;
+    }
+
+    LRESULT OnLbnSelchangeList1(WORD /*wNotifyCode*/, WORD /*wID*/, HWND /*hWndCtl*/, BOOL& /*bHandled*/)
+    {
+        CString selectedOutputDriver;
+        CString selectedDriverMode;
+
+        int index = playbackDevices.GetCurSel();
+        int length = playbackDevices.GetTextLen(index);
+
+        if (playbackDevices.GetText(index, selectedOutputDriver.GetBuffer(length)))
+        {
+            selectedOutputDriver.ReleaseBuffer();
+
+            int index = driverMode.GetCurSel();
+            int length = driverMode.GetLBTextLen(index);
+
+            if (driverMode.GetLBText(index, selectedDriverMode.GetBuffer(length)))
+            {
+                selectedDriverMode.ReleaseBuffer();
+
+                if (selectedDriverMode.CompareNoCase(L"ASIO") == 0)
+                {
+                    SaveOutputDriverAsio(selectedOutputDriver);
+                }
+                else
+                {
+                    SaveOutputDriverWasapi(selectedOutputDriver);
+                }
+            }
+        }
+
+        return 0;
+    }
+};
 
 class CView2 : public CDialogImpl<CView2>
 {
