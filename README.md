@@ -36,3 +36,8 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 ![image](https://user-images.githubusercontent.com/100102043/155243242-4c409017-0686-4382-828f-9c599fd186ef.png)
 
 <li>ASIO support via BassAsio</li>
+
+![image](https://user-images.githubusercontent.com/100102043/156660098-d7f3aff7-0612-4937-9cca-8eb64f693eb4.png)
+![image](https://user-images.githubusercontent.com/100102043/156660133-02e6fb46-6e8d-48e1-add5-406fe03f62f2.png)
+
+
