@@ -728,7 +728,7 @@ public:
     {
         IDD = IDD_ADVANCED
     };
-    BEGIN_MSG_MAP(CView1)
+    BEGIN_MSG_MAP(CView2)
         MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialogView2)
         COMMAND_ID_HANDLER(IDC_SNAPPLY, OnButtonApply)
     END_MSG_MAP()
