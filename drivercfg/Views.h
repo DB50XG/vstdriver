@@ -511,11 +511,17 @@ public:
 
             deviceName = CString(asioDeviceInfo.name);
 
+            double sampleRate = BASS_ASIO_GetRate();
+
+            BASS_ASIO_INFO info;
+            BASS_ASIO_GetInfo(&info);
+
             BASS_ASIO_CHANNELINFO channelInfo{};
 
             for (size_t channel = 0; BASS_ASIO_ChannelGetInfo(FALSE, channel, &channelInfo); ++channel)
             {
                 deviceItem.Format(L"%s %s", deviceName, CString(channelInfo.name));
+                //deviceItem.Format(L"%s %s\t%.0f Hz\t%d samples", deviceName, CString(channelInfo.name), sampleRate, info.bufpref);
                 if (playbackDevices.FindStringExact(0, deviceItem) == LB_ERR)
                 {
                     playbackDevices.AddString(deviceItem);
@@ -615,8 +621,10 @@ public:
 
         driverMode = GetDlgItem(IDC_COMBO1);
 
-        driverMode.AddString(L"WASAPI");
-        driverMode.SelectString(0, L"WASAPI");
+        driverMode.AddString(L"WASAPI Exclusive");
+        driverMode.AddString(L"WASAPI Shared");
+
+        driverMode.SelectString(0, L"WASAPI Exclusive");
 
         CString selectedDriverMode = LoadDriverMode();
 
@@ -628,22 +636,20 @@ public:
         if (isAsio)
         {
             driverMode.AddString(L"ASIO");
-            driverMode.EnableWindow(true);
 
             if (selectedDriverMode.CompareNoCase(L"ASIO") == 0)
             {
                 driverMode.SelectString(0, L"ASIO");
                 LoadAsioDrivers();
-            }
-            else
-            {
-                LoadWasapiDrivers();
+                return 0;
             }
         }
-        else
+
+        if (selectedDriverMode.CompareNoCase(L"WASAPI Shared") == 0)
         {
-            LoadWasapiDrivers();
+            driverMode.SelectString(0, L"WASAPI Shared");
         }
+        LoadWasapiDrivers();
 
         return 0;
     }
