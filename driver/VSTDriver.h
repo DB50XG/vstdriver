@@ -82,7 +82,7 @@ public:
     VSTDriver();
     ~VSTDriver();
     void CloseVSTDriver();
-    bool OpenVSTDriver(TCHAR* szPath = NULL, uint32_t** error = NULL);
+    bool OpenVSTDriver(TCHAR* szPath = NULL, uint32_t** error = NULL, unsigned int sampleRate = 44100);
     void SaveVstiSettings();
     void ResetDriver();
     void ProcessMIDIMessage(DWORD dwPort, DWORD dwParam1);

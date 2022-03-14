@@ -154,7 +154,6 @@ void VSTDriver::InitializeVstiPath(TCHAR* szPath)
 /// <summary>
 /// Load the settings of the VSTi plugin
 /// </summary>
-/// <param name="effect">The path to the VSTi</param>
 void VSTDriver::LoadVstiSettings()
 {
 	HKEY hKey;
@@ -197,7 +196,6 @@ void VSTDriver::LoadVstiSettings()
 /// <summary>
 /// Save the settings of the VSTi plugin
 /// </summary>
-/// <param name="effect">The VSTi</param>
 void VSTDriver::SaveVstiSettings()
 {
 	if (!szPluginPath)
@@ -661,7 +659,7 @@ void VSTDriver::CloseVSTDriver()
 	}
 }
 
-bool VSTDriver::OpenVSTDriver(TCHAR* szPath, uint32_t** error)
+bool VSTDriver::OpenVSTDriver(TCHAR* szPath, uint32_t** error, unsigned int sampleRate)
 {
 	CloseVSTDriver();
 
@@ -672,7 +670,7 @@ bool VSTDriver::OpenVSTDriver(TCHAR* szPath, uint32_t** error)
 		return false;
 	}
 
-	if (!SetSampleRate(44100))
+	if (!SetSampleRate(sampleRate))
 	{
 		return false;
 	}

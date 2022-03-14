@@ -25,30 +25,22 @@ namespace VSTMIDIDRV {
 
     class MidiSynth {
     private:
-        unsigned int sampleRate;
-        unsigned int midiLatency, midiLatencyMS;
-        unsigned int bufferSize, bufferSizeMS;
-        unsigned int chunkSize, chunkSizeMS;
-        bool resetEnabled;
-        float outputGain;
+        unsigned int chunkSize = 0;
+        unsigned int bufferSize = 0;
 
-        short* buffer;
-        float* bufferf;
-        DWORD framesRendered;
+        VSTDriver* vstDriver = NULL;
 
-        VSTDriver* vstDriver;
-
-        MidiSynth();
+        MidiSynth() noexcept;
 
     public:
-        static MidiSynth& getInstance();
-        int Init(unsigned uDeviceID) noexcept;
         void Close() noexcept;
-        int Reset(unsigned uDeviceID) noexcept;
-        void Render(short* bufpos, DWORD totalFrames);
-        void RenderFloat(float* bufpos, DWORD totalFrames);
+        static MidiSynth& GetInstance();
+        int Init(unsigned uDeviceID);
         DWORD PutMidiMessage(unsigned uDeviceID, DWORD dwParam1);
         DWORD PutSysEx(unsigned uDeviceID, unsigned char* bufpos, DWORD len);
+        void Render(short* bufpos, DWORD totalFrames);
+        void RenderFloat(float* bufpos, DWORD totalFrames);
+        int Reset(unsigned uDeviceID) noexcept;
     };
 
 }

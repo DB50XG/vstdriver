@@ -22,7 +22,7 @@ extern "C" { HINSTANCE hinst_vst_driver = 0; }
 constexpr auto MAX_DRIVERS = 2;
 constexpr auto MAX_CLIENTS = 8; // Per driver
 
-static VSTMIDIDRV::MidiSynth& midiSynth = VSTMIDIDRV::MidiSynth::getInstance();
+static VSTMIDIDRV::MidiSynth& midiSynth = VSTMIDIDRV::MidiSynth::GetInstance();
 
 static bool isSynthOpened = false;
 //static HWND hwnd = NULL;

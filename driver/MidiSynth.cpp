@@ -15,12 +15,14 @@
  */
 
 #include "stdafx.h"
+#include "winreg.h"
+#include <map>
 
 #undef GetMessage
 
- // Define BASSASIO functions as pointers
+// Define BASSASIO functions as pointers
 #define BASSASIODEF(f) (WINAPI *f)
-#define LOADBASSASIOFUNCTION(f) *((void**)&f)=GetProcAddress(bassasio,#f)
+#define LOADBASSASIOFUNCTION(f) *((void**)&f)=GetProcAddress(bassAsio,#f)
 
 // Define BASS functions as pointers
 #define BASSDEF(f) (WINAPI *f)
@@ -28,24 +30,34 @@
 
 // Define BASSWASAPI functions as pointers
 #define BASSWASAPIDEF(f) (WINAPI *f)
-#define LOADBASSWASAPIFUNCTION(f) *((void**)&f)=GetProcAddress(basswasapi,#f)
+#define LOADBASSWASAPIFUNCTION(f) *((void**)&f)=GetProcAddress(bassWasapi,#f)
 
 #include <bass.h>
 #include <bassasio.h>
 #include <basswasapi.h>
 
 #include "VSTDriver.h"
+#include <string>
+#include <codecvt>
+
+using std::string;
+using std::wstring;
+using std::map;
+using std::wstring_convert;
+using std::codecvt_utf8;
+
 
 extern "C" { extern HINSTANCE hinst_vst_driver; }
 
 namespace VSTMIDIDRV
 {
-    static MidiSynth& midiSynth = MidiSynth::getInstance();
+    static MidiSynth& midiSynth = MidiSynth::GetInstance();
 
     /// <summary>
     /// Collects midi messages from the midi source
     /// </summary>
-    static class MidiStream {
+    static class MidiStream
+    {
     private:
         static const unsigned int maxPos = 1024;
         unsigned int startpos;
@@ -112,7 +124,7 @@ namespace VSTMIDIDRV
         /// <param name="sysEx">The MIDI System Exclusive message to put.</param>
         /// <param name="sysExLength">The length of the MIDI System Exclusive message.</param>
         /// <returns></returns>
-        DWORD PutSysEx(DWORD port, unsigned char* sysEx, DWORD sysExLength) noexcept
+        DWORD PutSysEx(DWORD port, const unsigned char* sysEx, DWORD sysExLength) noexcept
         {
             unsigned int newEndpos = endpos;
 
@@ -201,7 +213,8 @@ namespace VSTMIDIDRV
         }
     } midiStream;
 
-    static class SynthMutexWin32 {
+    static class SynthMutexWin32
+    {
     private:
         CRITICAL_SECTION cCritSec;
 
@@ -228,75 +241,93 @@ namespace VSTMIDIDRV
         }
     } synthMutex;
 
-    static class WaveOutWin32 {
+    static class WaveOutWin32
+    {
     private:
-        HINSTANCE   bass;			// bass handle
-        HINSTANCE   basswasapi;		// basswasapi handle
-        HINSTANCE   bassasio;       // bassasio handle
+        HINSTANCE bass = NULL;          // bass handle
+        HINSTANCE bassAsio = NULL;      // bassasio handle
+        HINSTANCE bassWasapi = NULL;    // basswasapi handle
 
-        HSTREAM     hStOutput;
+        HSTREAM hStOutput = NULL;
+
+        TCHAR* modeValueName = L"Mode";
+        TCHAR* asioValueName = L"ASIO";
+        TCHAR* wasapiValueName = L"WASAPI";
 
         bool        soundOutFloat = false;
         DWORD       wasapiBits = 16;
         DWORD		buflen = 0;
 
-    public:
-        WaveOutWin32() noexcept : bassasio(0), bass(0), basswasapi(0), hStOutput(0) { }
+        TCHAR installPath[MAX_PATH] = { 0 };
+        TCHAR bassPath[MAX_PATH] = { 0 };
+        TCHAR bassAsioPath[MAX_PATH] = { 0 };
+        TCHAR bassWasapiPath[MAX_PATH] = { 0 };
 
-        int Init(unsigned int bufferSize, unsigned int chunkSize, unsigned int sampleRate) noexcept
+        map<wstring, wstring> outputDriver;
+
+        void InitializePaths() noexcept
         {
-            TCHAR installpath[MAX_PATH] = { 0 };
-            TCHAR basspath[MAX_PATH] = { 0 };
-            TCHAR basswasapipath[MAX_PATH] = { 0 };
-            TCHAR bassasiopath[MAX_PATH] = { 0 };
+            GetModuleFileName(hinst_vst_driver, installPath, MAX_PATH);
+            PathRemoveFileSpec(installPath);
+            lstrcat(installPath, _T("\\vstmididrv\\"));
 
-            GetModuleFileName(hinst_vst_driver, installpath, MAX_PATH);
-            PathRemoveFileSpec(installpath);
-            lstrcat(installpath, _T("\\vstmididrv"));
+            lstrcat(bassPath, installPath);
+            lstrcat(bassPath, _T("bass.dll"));
 
-            // Load Bass Asio
-            lstrcat(bassasiopath, installpath);
-            lstrcat(bassasiopath, _T("\\bassasio.dll"));
-            bassasio = LoadLibrary(bassasiopath);
+            lstrcat(bassAsioPath, installPath);
+            lstrcat(bassAsioPath, _T("bassasio.dll"));
 
-            if (!bassasio)
+            lstrcat(bassWasapiPath, installPath);
+            lstrcat(bassWasapiPath, _T("basswasapi.dll"));
+        }
+
+        bool LoadBass(wstring mode) noexcept
+        {
+            if (mode.empty() || mode.compare(asioValueName) == 0)
+            {
+                // Load Bass Asio
+                bassAsio = LoadLibrary(bassAsioPath);
+            }
+
+            if (!bassAsio)
             {
                 // Load Bass
-                lstrcat(basspath, installpath);
-                lstrcat(basspath, _T("\\bass.dll"));
-                bass = LoadLibrary(basspath);
+                bass = LoadLibrary(bassPath);
 
                 if (!bass)
                 {
-                    OutputDebugString(_T("Failed to load BASS.dll.\n"));
-                    return 1;
+                    return false;
                 }
 
                 // Load Bass Wasapi
-                lstrcat(basswasapipath, installpath);
-                lstrcat(basswasapipath, _T("\\basswasapi.dll"));
-                basswasapi = LoadLibrary(basswasapipath);
+                bassWasapi = LoadLibrary(bassWasapiPath);
             }
 
-            if (bassasio)
+            if (bassAsio)
             {
                 LOADBASSASIOFUNCTION(BASS_ASIO_Init);
                 LOADBASSASIOFUNCTION(BASS_ASIO_Free);
-                LOADBASSASIOFUNCTION(BASS_ASIO_Start);
                 LOADBASSASIOFUNCTION(BASS_ASIO_Stop);
+                LOADBASSASIOFUNCTION(BASS_ASIO_Start);
                 LOADBASSASIOFUNCTION(BASS_ASIO_GetInfo);
                 LOADBASSASIOFUNCTION(BASS_ASIO_GetRate);
+                LOADBASSASIOFUNCTION(BASS_ASIO_SetRate);
                 LOADBASSASIOFUNCTION(BASS_ASIO_SetNotify);
+                LOADBASSASIOFUNCTION(BASS_ASIO_GetDeviceInfo);
+                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelGetInfo);
                 LOADBASSASIOFUNCTION(BASS_ASIO_ChannelJoin);
                 LOADBASSASIOFUNCTION(BASS_ASIO_ChannelReset);
                 LOADBASSASIOFUNCTION(BASS_ASIO_ChannelEnable);
+                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelIsActive);
                 LOADBASSASIOFUNCTION(BASS_ASIO_ChannelSetFormat);
             }
             else if (bass)
             {
-                LOADBASSFUNCTION(BASS_SetConfig);
                 LOADBASSFUNCTION(BASS_Init);
                 LOADBASSFUNCTION(BASS_Free);
+                LOADBASSFUNCTION(BASS_SetConfig);
+                LOADBASSFUNCTION(BASS_ErrorGetCode);
+                LOADBASSFUNCTION(BASS_GetDeviceInfo);
                 LOADBASSFUNCTION(BASS_StreamCreate);
                 LOADBASSFUNCTION(BASS_StreamFree);
                 LOADBASSFUNCTION(BASS_ChannelPlay);
@@ -305,7 +336,7 @@ namespace VSTMIDIDRV
                 LOADBASSFUNCTION(BASS_ChannelPause);
                 LOADBASSFUNCTION(BASS_ChannelGetData);
 
-                if (basswasapi)
+                if (bassWasapi)
                 {
                     LOADBASSWASAPIFUNCTION(BASS_WASAPI_Init);
                     LOADBASSWASAPIFUNCTION(BASS_WASAPI_Free);
@@ -315,98 +346,252 @@ namespace VSTMIDIDRV
                 }
             }
 
-            if (bassasio)
+            return true;
+        }
+
+        void LoadOutputDriverSettings()
+        {
+            HKEY hKey;
+
+            LSTATUS result = RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\VSTi Driver\\Output Driver", 0, KEY_READ | KEY_WOW64_32KEY, &hKey);
+
+            if (result != NO_ERROR)
             {
-                if (!BASS_ASIO_Init(0, BASS_ASIO_THREAD))
-                    //if (!BASS_ASIO_Init(0, BASS_ASIO_THREAD))
+                return;
+            }
+
+            DWORD values;
+            DWORD valueNameMaxSize;
+            DWORD valueMaxSize;
+
+            result = RegQueryInfoKey(hKey, NULL, NULL, NULL, NULL, NULL, NULL, &values, &valueNameMaxSize, &valueMaxSize, NULL, NULL);
+
+            if (result != NO_ERROR || values == 0)
+            {
+                return;
+            }
+
+            TCHAR* valueName = NULL;
+            DWORD valueNameSize = 0;
+            TCHAR* value = NULL;
+            DWORD valueSize = 0;
+
+            DWORD valueType = REG_NONE;
+
+            valueName = (TCHAR*)calloc(valueNameMaxSize + 1, sizeof(TCHAR));
+            value = (TCHAR*)calloc(valueMaxSize + 1, sizeof(TCHAR));
+
+            for (int i = 0; i < values; ++i)
+            {
+                valueNameSize = valueNameMaxSize + 1;
+                valueSize = valueMaxSize + 1;
+
+                result = RegEnumValue(hKey, i, valueName, &valueNameSize, NULL, &valueType, (LPBYTE)value, &valueSize);
+
+                if (result == NO_ERROR && valueType == REG_SZ)
                 {
-                    return 2;
+                    wstring tempName = valueName;
+                    wstring tempValue = value;
+
+                    outputDriver[tempName] = tempValue;
+                }
+            }
+
+            free(valueName);
+            free(value);
+        }
+
+        /// <summary>
+        /// Get the selected ASIO driver
+        /// </summary>
+        /// <param name="selectedDeviceId">The device id of the selected ASIO driver</param>
+        /// <param name="selectedChannelId">The channeld id of the selected ASIO driver</param>
+        void GetSelectedAsioDriver(int& selectedDeviceId, int& selectedChannelId)
+        {
+            selectedDeviceId = -1;
+            selectedChannelId = 0;
+
+            wstring selectedOutputDriver = outputDriver[asioValueName];
+
+            BASS_ASIO_DEVICEINFO asioDeviceInfo{};
+
+            for (size_t deviceId = 0; BASS_ASIO_Init(deviceId, BASS_ASIO_THREAD); ++deviceId)
+            {
+                BASS_ASIO_GetDeviceInfo(deviceId, &asioDeviceInfo);
+
+                wstring deviceName = wstring_convert<codecvt_utf8<wchar_t>>().from_bytes(asioDeviceInfo.name);
+
+                if (selectedOutputDriver.find(deviceName) == string::npos)
+                {
+                    continue;
                 }
 
-                //BASS_ASIO_INFO ainfo{};
-                //if (!BASS_ASIO_GetInfo(&ainfo))
-                //{
-                //    BASS_ASIO_Free();
-                //    return 3;
-                //}
+                selectedDeviceId = deviceId;
 
-                // Stop ASIO device in case it was playing
-                //if (BASS_ASIO_IsStarted)
-                //{
-                //    BASS_ASIO_Stop();
-                //}
-                // Disable inputs in preparation for playing
-                //BASS_ASIO_ChannelReset(TRUE, -1, BASS_ASIO_RESET_ENABLE);
+                BASS_ASIO_CHANNELINFO channelInfo{};
+
+                size_t pos = strlen(asioDeviceInfo.name);
+
+                for (size_t channel = 0; BASS_ASIO_ChannelGetInfo(FALSE, channel, &channelInfo); ++channel)
+                {
+                    wstring channelName = wstring_convert<codecvt_utf8<wchar_t>>().from_bytes(channelInfo.name);
+                    if (selectedOutputDriver.find(channelName, pos) == string::npos)
+                    {
+                        continue;
+                    }
+
+                    selectedChannelId = channel;
+                    break;
+                }
+
+                BASS_ASIO_Free();
+            }
+        }
+
+        /// <summary>
+        /// Get the selected WASAPI driver
+        /// </summary>
+        void GetSelectedWasapiDriver(int& selectedDeviceId)
+        {
+            selectedDeviceId = -1;
+
+            wstring selectedOutputDriver = outputDriver[wasapiValueName];
+
+            BASS_DEVICEINFO deviceInfo{};
+
+            for (size_t deviceId = 1; BASS_GetDeviceInfo(deviceId, &deviceInfo); ++deviceId)
+            {
+                wstring deviceName = wstring_convert<codecvt_utf8<wchar_t>>().from_bytes(deviceInfo.name);
+                if (selectedOutputDriver.compare(deviceName) == 0)
+                {
+                    selectedDeviceId = deviceId - 1;
+                    break;
+                }
+            }
+        }
+
+    public:
+        WaveOutWin32() noexcept
+        {
+        }
+
+        int Init(unsigned int bufferSize, unsigned int chunkSize, unsigned int sampleRate)
+        {
+            if (bassPath[0] == NULL)
+            {
+                InitializePaths();
+            }
+
+            LoadOutputDriverSettings();
+
+            wstring selectedMode = outputDriver[modeValueName];
+
+            if (!LoadBass(selectedMode))
+            {
+                return -1;
+            }
+
+            int deviceId;
+
+            if (bassAsio)
+            {
+                int channelId;
+
+                GetSelectedAsioDriver(deviceId, channelId);
+
+                if (!BASS_ASIO_Init(deviceId, BASS_ASIO_THREAD))
+                {
+                    return -2;
+                }
+
+                // Set the samplerate
+                BASS_ASIO_SetRate(sampleRate);
 
                 // Enable 1st output channel
-                BASS_ASIO_ChannelEnable(FALSE, 0, AsioProc, this);
+                BASS_ASIO_ChannelEnable(FALSE, channelId, AsioProc, this);
 
                 // Join the next channel to it (stereo)
-                BASS_ASIO_ChannelJoin(FALSE, 1, 0);
+                BASS_ASIO_ChannelJoin(FALSE, channelId + 1, channelId);
 
                 // Set the source format to 16-bit
-                BASS_ASIO_ChannelSetFormat(FALSE, 0, BASS_ASIO_FORMAT_16BIT);
+                BASS_ASIO_ChannelSetFormat(FALSE, channelId, BASS_ASIO_FORMAT_16BIT);
 
                 //BASS_ASIO_SetNotify((ASIONOTIFYPROC*)AsioNotifyProc, this);
             }
-            else if (BASS_Init(0, sampleRate, 0, NULL, NULL))
+            else if (bassWasapi)
             {
+                GetSelectedWasapiDriver(deviceId);
+                
+                // WASAPI Shared
+                if (!BASS_WASAPI_Init(deviceId, sampleRate, 2, BASS_WASAPI_EVENT | BASS_WASAPI_AUTOFORMAT, 0, 0, WasapiProc, this))
+                {
+                    int error = BASS_ErrorGetCode();
+                    return -3;
+                }
+                // TODO: WASAPI Exclusive
+
+                BASS_WASAPI_INFO winfo{};
+
+                if (!BASS_WASAPI_GetInfo(&winfo))
+                {
+                    int error = BASS_ErrorGetCode();
+                    BASS_WASAPI_Free();
+                    return -4;
+                }
+
+                sampleRate = winfo.freq;
+
+                switch (winfo.format)
+                {
+                    case BASS_WASAPI_FORMAT_8BIT:
+                        wasapiBits = 8;
+                        break;
+
+                    default:
+                    case BASS_WASAPI_FORMAT_16BIT:
+                        wasapiBits = 16;
+                        break;
+
+                    case BASS_WASAPI_FORMAT_24BIT:
+                        wasapiBits = 24;
+                        break;
+
+                    case BASS_WASAPI_FORMAT_32BIT:
+                        wasapiBits = 32;
+                        break;
+
+                    case BASS_WASAPI_FORMAT_FLOAT:
+                        soundOutFloat = TRUE;
+                        break;
+                }
+            }
+            else if (bass)
+            {
+                if (!BASS_Init(deviceId, sampleRate, 0, NULL, NULL))
+                {
+                    int error = BASS_ErrorGetCode();
+                    return -5;
+                }
+
                 BASS_SetConfig(BASS_CONFIG_UPDATEPERIOD, 0);
                 BASS_SetConfig(BASS_CONFIG_VISTA_TRUEPOS, 0);
                 BASS_SetConfig(BASS_CONFIG_BUFFER, 0);
 
-                if (basswasapi)
+                hStOutput = BASS_StreamCreate(sampleRate, 2, (soundOutFloat ? BASS_SAMPLE_FLOAT : 0), StreamProc, this);
+                if (!hStOutput)
                 {
-                    BASS_WASAPI_INFO winfo;
-                    if (!BASS_WASAPI_Init(-1, 0, 2, BASS_WASAPI_EVENT, (float)bufferSize * 0.001f, (float)chunkSize * 0.001f, WasapiProc, this))
-                    {
-                        return 2;
-                    }
-
-                    if (!BASS_WASAPI_GetInfo(&winfo))
-                    {
-                        BASS_WASAPI_Free();
-                        return 3;
-                    }
-
-                    sampleRate = winfo.freq;
-
-                    switch (winfo.format)
-                    {
-                        case BASS_WASAPI_FORMAT_8BIT:
-                            wasapiBits = 8;
-                            break;
-
-                        case BASS_WASAPI_FORMAT_16BIT:
-                            wasapiBits = 16;
-                            break;
-
-                        case BASS_WASAPI_FORMAT_24BIT:
-                            wasapiBits = 24;
-                            break;
-
-                        case BASS_WASAPI_FORMAT_32BIT:
-                            wasapiBits = 32;
-                            break;
-
-                        case BASS_WASAPI_FORMAT_FLOAT:
-                            soundOutFloat = TRUE;
-                            break;
-                    }
-                }
-                else
-                {
-                    hStOutput = BASS_StreamCreate(sampleRate, 2, (soundOutFloat ? BASS_SAMPLE_FLOAT : 0), StreamProc, this);
-                    if (!hStOutput) return 2;
+                    int error = BASS_ErrorGetCode();
+                    BASS_Free();
+                    return -6;
                 }
             }
 
-            return 0;
+            return sampleRate;
         }
 
         int Close() noexcept
         {
-            if (bassasio)
+            if (bassAsio)
             {
                 // Stop ASIO device in case it was playing
                 if (BASS_ASIO_IsStarted)
@@ -415,16 +600,16 @@ namespace VSTMIDIDRV
                 }
                 BASS_ASIO_Free();
 
-                FreeLibrary(bassasio);
-                bassasio = NULL;
+                FreeLibrary(bassAsio);
+                bassAsio = NULL;
             }
 
-            if (basswasapi)
+            if (bassWasapi)
             {
                 BASS_WASAPI_Stop(TRUE);
                 BASS_WASAPI_Free();
-                FreeLibrary(basswasapi);
-                basswasapi = NULL;
+                FreeLibrary(bassWasapi);
+                bassWasapi = NULL;
             }
             else if (hStOutput)
             {
@@ -445,11 +630,11 @@ namespace VSTMIDIDRV
 
         int Start() noexcept
         {
-            if (bassasio)
+            if (bassAsio)
             {
                 BASS_ASIO_Start(buflen, 0);
             }
-            else if (basswasapi)
+            else if (bassWasapi)
             {
                 BASS_WASAPI_Start();
             }
@@ -463,11 +648,11 @@ namespace VSTMIDIDRV
 
         int Pause() noexcept
         {
-            if (bassasio)
+            if (bassAsio)
             {
                 //BASS_ASIO_ChannelPause(FALSE, -1);
             }
-            else if (basswasapi)
+            else if (bassWasapi)
             {
                 BASS_WASAPI_Stop(FALSE);
             }
@@ -481,11 +666,11 @@ namespace VSTMIDIDRV
 
         int Resume() noexcept
         {
-            if (bassasio)
+            if (bassAsio)
             {
                 //BASS_ASIO_ChannelReset(FALSE, -1, BASS_ASIO_RESET_PAUSE);
             }
-            else if (basswasapi)
+            else if (bassWasapi)
             {
                 BASS_WASAPI_Start();
             }
@@ -597,9 +782,9 @@ namespace VSTMIDIDRV
         }
     } waveOut;
 
-    MidiSynth::MidiSynth() {}
+    MidiSynth::MidiSynth() noexcept {}
 
-    MidiSynth& MidiSynth::getInstance()
+    MidiSynth& MidiSynth::GetInstance()
     {
         static MidiSynth instance;
         return instance;
@@ -676,34 +861,29 @@ namespace VSTMIDIDRV
         return bOsVersionInfoEx && osvi.dwPlatformId == VER_PLATFORM_WIN32_NT && osvi.dwMajorVersion > 5;
     }
 
-    int MidiSynth::Init(unsigned uDeviceID) noexcept
+    int MidiSynth::Init(unsigned uDeviceID)
     {
-        sampleRate = 44100;
-        bufferSizeMS = 0;
-        bufferSize = UINT(bufferSizeMS * sampleRate / 1000.f);
-        chunkSizeMS = 0;
-        chunkSize = UINT(chunkSizeMS * sampleRate / 1000.f);
-        midiLatencyMS = 0;
-        midiLatency = UINT(midiLatencyMS * sampleRate / 1000.f);
-
         // Init synth
         if (synthMutex.Init())
         {
             return 1;
         }
 
+        unsigned int sampleRate = 44100;
+        int wResult = waveOut.Init(bufferSize, chunkSize, sampleRate);
+        if (wResult < 0)
+        {
+            return -wResult;
+        }
+
+        sampleRate = wResult;
+
         vstDriver = new VSTDriver;
-        if (!vstDriver->OpenVSTDriver())
+        if (!vstDriver->OpenVSTDriver(NULL, NULL, sampleRate))
         {
             delete vstDriver;
             vstDriver = NULL;
             return 1;
-        }
-
-        UINT wResult = waveOut.Init(bufferSizeMS, chunkSizeMS, sampleRate);
-        if (wResult)
-        {
-            return wResult;
         }
 
         return waveOut.Start();
