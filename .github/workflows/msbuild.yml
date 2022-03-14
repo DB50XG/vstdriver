@@ -57,8 +57,8 @@ jobs:
       with:
         draft: false
         prerelease: false
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }} ${{ steps.version.outputs.version }}
+        tag_name: ${'%Y%M%D'}
+        release_name: Release ${'%Y%M%D'}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       
