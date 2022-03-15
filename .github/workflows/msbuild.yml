@@ -33,10 +33,10 @@ jobs:
 #        scoop install nsis
       
     - name: set env
-      run: echo "now_date=$((Get-Date).ToString('yyyyMMdd'))" >> $GITHUB_ENV
+      run: echo "NOW_DATE=$((Get-Date).ToString('yyyyMMdd'))" >> $GITHUB_ENV
       
     - name: Test now_date
-      run: echo $now_date
+      run: echo ${env.NOW_DATE}
       
     - name: Print NSIS version
       run: makensis -VERSION
@@ -64,8 +64,8 @@ jobs:
       with:
         draft: false
         prerelease: false
-        tag_name: $now_date
-        release_name: Release $now_date
+        tag_name: ${NOW_DATE}
+        release_name: Release ${env.NOW_DATE}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       
