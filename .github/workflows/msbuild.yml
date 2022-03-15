@@ -33,7 +33,7 @@ jobs:
 #        scoop install nsis
       
     - name: set env
-      run: echo "NOW=$('%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+      run: echo "NOW=$((Get-Date).ToString('yyyyMMdd'))" >> $GITHUB_ENV
       
     - name: Test NOW variable
       run: echo ${{ env.NOW }}
