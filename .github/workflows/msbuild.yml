@@ -36,7 +36,7 @@ jobs:
       run: echo "NOW=$((Get-Date).ToString('yyyyMMdd'))" >> $GITHUB_ENV
       
     - name: Test NOW variable
-      run: echo ${env:NOW}
+      run: echo ${{env.NOW}}
       
     - name: Print NSIS version
       run: makensis -VERSION
