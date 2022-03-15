@@ -22,9 +22,9 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
-    - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+#    - name: Restore NuGet packages
+#      working-directory: ${{env.GITHUB_WORKSPACE}}
+#      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
       
 #    - name: Install NSIS
 #      run: |
@@ -51,14 +51,17 @@ jobs:
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
       
+    - name: set env
+      run: echo "::set-env name=NOW::$('%Y-%m-%dT%H:%M:%S')"
+      
     - name: Release
       uses: actions/create-release@v1
       id: create_release
       with:
         draft: false
         prerelease: false
-        tag_name: ${'%Y%M%D'}
-        release_name: Release ${'%Y%M%D'}
+        tag_name: ${{ env.NOW }}
+        release_name: Release ${{ env.NOW }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       
