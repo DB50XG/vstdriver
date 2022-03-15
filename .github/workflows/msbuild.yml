@@ -33,8 +33,7 @@ jobs:
 #        scoop install nsis
       
     - name: set env
-      env:
-        run: echo "NOW=$((Get-Date).ToString('yyyyMMdd'))"
+      run: echo "NOW=$((Get-Date).ToString('yyyyMMdd'))"
       
     - name: Test NOW variable
       run: echo ${{ env.NOW }}
