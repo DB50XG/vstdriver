@@ -254,9 +254,9 @@ namespace VSTMIDIDRV
         TCHAR* asioValueName = L"ASIO";
         TCHAR* wasapiValueName = L"WASAPI";
 
-        bool        soundOutFloat = false;
-        DWORD       wasapiBits = 16;
-        DWORD		buflen = 0;
+        bool soundOutFloat = false;
+        DWORD wasapiBits = 16;
+        DWORD buflen = 0;
 
         TCHAR installPath[MAX_PATH] = { 0 };
         TCHAR bassPath[MAX_PATH] = { 0 };
@@ -343,6 +343,7 @@ namespace VSTMIDIDRV
                     LOADBASSWASAPIFUNCTION(BASS_WASAPI_Start);
                     LOADBASSWASAPIFUNCTION(BASS_WASAPI_Stop);
                     LOADBASSWASAPIFUNCTION(BASS_WASAPI_GetInfo);
+                    LOADBASSWASAPIFUNCTION(BASS_WASAPI_GetDeviceInfo);
                 }
             }
 
@@ -453,18 +454,19 @@ namespace VSTMIDIDRV
         /// </summary>
         void GetSelectedWasapiDriver(int& selectedDeviceId)
         {
+            // -1 = default output device
             selectedDeviceId = -1;
 
             wstring selectedOutputDriver = outputDriver[wasapiValueName];
 
-            BASS_DEVICEINFO deviceInfo{};
+            BASS_WASAPI_DEVICEINFO  deviceInfo{};
 
-            for (size_t deviceId = 1; BASS_GetDeviceInfo(deviceId, &deviceInfo); ++deviceId)
+            for (size_t deviceId = 0; BASS_WASAPI_GetDeviceInfo(deviceId, &deviceInfo); ++deviceId)
             {
                 wstring deviceName = wstring_convert<codecvt_utf8<wchar_t>>().from_bytes(deviceInfo.name);
-                if (selectedOutputDriver.compare(deviceName) == 0)
+                if (!(deviceInfo.flags & BASS_DEVICE_INPUT) && (deviceInfo.flags & BASS_DEVICE_ENABLED) && selectedOutputDriver.compare(deviceName) == 0)
                 {
-                    selectedDeviceId = deviceId - 1;
+                    selectedDeviceId = deviceId;
                     break;
                 }
             }
