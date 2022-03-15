@@ -31,6 +31,12 @@ jobs:
 #        Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
 #        scoop bucket add extras
 #        scoop install nsis
+      
+    - name: set env
+      run: echo "NOW=$('%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
+      
+    - name: Test NOW variable
+      run: echo ${{ env.NOW }}
         
     - name: Print NSIS version
       run: makensis -VERSION
@@ -50,9 +56,6 @@ jobs:
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
-      
-    - name: set env
-      run: echo "NOW=$('%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       
     - name: Release
       uses: actions/create-release@v1
