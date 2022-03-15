@@ -287,6 +287,34 @@ namespace VSTMIDIDRV
             {
                 // Load Bass Asio
                 bassAsio = LoadLibrary(bassAsioPath);
+
+                LOADBASSASIOFUNCTION(BASS_ASIO_Init);
+
+                /// Check if there is at least one ASIO capable device
+                if (BASS_ASIO_Init(-1, BASS_ASIO_THREAD))
+                {
+                    LOADBASSASIOFUNCTION(BASS_ASIO_Free);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_Stop);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_Start);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_GetInfo);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_GetRate);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_SetRate);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_SetNotify);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_GetDeviceInfo);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_ChannelGetInfo);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_ChannelJoin);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_ChannelReset);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_ChannelEnable);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_ChannelIsActive);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_ChannelSetFormat);
+
+                    BASS_ASIO_Free();
+                }
+                else
+                {
+                    FreeLibrary(bassAsio);
+                    bassAsio = NULL;
+                }
             }
 
             if (!bassAsio)
@@ -302,26 +330,8 @@ namespace VSTMIDIDRV
                 // Load Bass Wasapi
                 bassWasapi = LoadLibrary(bassWasapiPath);
             }
-
-            if (bassAsio)
-            {
-                LOADBASSASIOFUNCTION(BASS_ASIO_Init);
-                LOADBASSASIOFUNCTION(BASS_ASIO_Free);
-                LOADBASSASIOFUNCTION(BASS_ASIO_Stop);
-                LOADBASSASIOFUNCTION(BASS_ASIO_Start);
-                LOADBASSASIOFUNCTION(BASS_ASIO_GetInfo);
-                LOADBASSASIOFUNCTION(BASS_ASIO_GetRate);
-                LOADBASSASIOFUNCTION(BASS_ASIO_SetRate);
-                LOADBASSASIOFUNCTION(BASS_ASIO_SetNotify);
-                LOADBASSASIOFUNCTION(BASS_ASIO_GetDeviceInfo);
-                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelGetInfo);
-                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelJoin);
-                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelReset);
-                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelEnable);
-                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelIsActive);
-                LOADBASSASIOFUNCTION(BASS_ASIO_ChannelSetFormat);
-            }
-            else if (bass)
+            
+            if (bass)
             {
                 LOADBASSFUNCTION(BASS_Init);
                 LOADBASSFUNCTION(BASS_Free);
@@ -335,16 +345,16 @@ namespace VSTMIDIDRV
                 LOADBASSFUNCTION(BASS_ChannelPause);
                 LOADBASSFUNCTION(BASS_ChannelPause);
                 LOADBASSFUNCTION(BASS_ChannelGetData);
+            }
 
-                if (bassWasapi)
-                {
-                    LOADBASSWASAPIFUNCTION(BASS_WASAPI_Init);
-                    LOADBASSWASAPIFUNCTION(BASS_WASAPI_Free);
-                    LOADBASSWASAPIFUNCTION(BASS_WASAPI_Start);
-                    LOADBASSWASAPIFUNCTION(BASS_WASAPI_Stop);
-                    LOADBASSWASAPIFUNCTION(BASS_WASAPI_GetInfo);
-                    LOADBASSWASAPIFUNCTION(BASS_WASAPI_GetDeviceInfo);
-                }
+            if (bassWasapi)
+            {
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_Init);
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_Free);
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_Start);
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_Stop);
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_GetInfo);
+                LOADBASSWASAPIFUNCTION(BASS_WASAPI_GetDeviceInfo);
             }
 
             return true;
