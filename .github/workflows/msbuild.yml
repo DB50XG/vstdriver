@@ -32,49 +32,9 @@ jobs:
 #        scoop bucket add extras
 #        scoop install nsis
       
-    - name: set env
-      run: echo "NOW_DATE=$((Get-Date).ToString('yyyyMMdd'))" >> $GITHUB_ENV
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=today::$(date +'%Y%m%d')" 
       
-    - name: Test now_date
-      run: echo ${env.NOW_DATE}
-      
-    - name: Print NSIS version
-      run: makensis -VERSION
-    - name: Print NSIS compile flags
-      run: makensis -HDRINFO
-      
-      
-    - name: Download LockedList
-      run: |
-        mkdir ${env:GITHUB_WORKSPACE}\LockedList
-        curl -O https://nsis.sourceforge.io/mediawiki/images/d/d3/LockedList.zip
-    
-    - name: Extract LockedList dll files
-      run: Expand-Archive -LiteralPath LockedList.zip -DestinationPath ${env:ProgramFiles(x86)}\nsis
-        
-    - name: Build
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      # Add additional options to the MSBuild command line here (like platform or verbosity level).
-      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
-      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
-      
-    - name: Release
-      uses: actions/create-release@v1
-      id: create_release
-      with:
-        draft: false
-        prerelease: false
-        tag_name: ${NOW_DATE}
-        release_name: Release ${env.NOW_DATE}
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      
-    - name: Upload Artifact
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-        asset_path: ./vstmididrv.exe
-        asset_name: vstdriver.exe
-        asset_content_type: application/octet-stream
+    - name: Test date
+      run: echo ${{ steps.date.outputs.today }}
