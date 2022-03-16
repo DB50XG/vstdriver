@@ -624,7 +624,7 @@ public:
         driverMode.AddString(L"WASAPI Exclusive");
         driverMode.AddString(L"WASAPI Shared");
 
-        driverMode.SelectString(0, L"WASAPI Exclusive");
+        driverMode.SelectString(0, L"WASAPI Shared");
 
         CString selectedDriverMode = LoadDriverMode();
 
@@ -645,9 +645,9 @@ public:
             }
         }
 
-        if (selectedDriverMode.CompareNoCase(L"WASAPI Shared") == 0)
+        if (selectedDriverMode.CompareNoCase(L"WASAPI Exclusive") == 0)
         {
-            driverMode.SelectString(0, L"WASAPI Shared");
+            driverMode.SelectString(0, L"WASAPI Exclusive");
         }
         LoadWasapiDrivers();
 
