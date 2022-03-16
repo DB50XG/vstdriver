@@ -9,7 +9,7 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 ## Overview
 <li>The VSTi Driver Configuration</li>
 
-![image](https://user-images.githubusercontent.com/100102043/155243100-daf26d14-cc68-4756-8f61-bb25949199d7.png)
+![image](https://user-images.githubusercontent.com/100102043/158668700-f3b020b7-2adf-4072-aee5-592570b3e8a0.png)
 
 <li>The loaded VSTi example</li>
 
@@ -21,5 +21,6 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
 <li>ASIO support via BassAsio</li>
 
-![image](https://user-images.githubusercontent.com/100102043/156660098-d7f3aff7-0612-4937-9cca-8eb64f693eb4.png)
-![image](https://user-images.githubusercontent.com/100102043/156660133-02e6fb46-6e8d-48e1-add5-406fe03f62f2.png)
+![image](https://user-images.githubusercontent.com/100102043/158668867-ffffecbf-453f-4bc9-9315-daff92420b4f.png)
+![image](https://user-images.githubusercontent.com/100102043/158668801-645df329-d221-4d41-a71d-821c88adeb43.png)
+
