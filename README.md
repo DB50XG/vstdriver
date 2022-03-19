@@ -1,10 +1,10 @@
 # VSTDriver
 A Windows user-mode software MIDI synthesizer driver which is capable of using any 32 or 64 bit VST Instrument
 
-<code>Copyright (C) 2011 Chris Moeller, Brad Miller</code><br>
-<code>Copyright (C) 2011, 2012 Sergey V. Mikayev</code><br>
-<code>Copyright (C) 2013-2022 Christopher Snowhill (kode54)</code><br>
-<code>Copyright (C) 2021 Hermann Seib</code>
+`Copyright (C) 2011 Chris Moeller, Brad Miller`  
+`Copyright (C) 2011, 2012 Sergey V. Mikayev`  
+`Copyright (C) 2013-2022 Christopher Snowhill (kode54)`  
+`Copyright (C) 2021 Hermann Seib`
 
 ## Overview
 * The VSTi Driver Configuration
