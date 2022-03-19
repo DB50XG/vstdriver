@@ -13,7 +13,8 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
 * The loaded VSTi example
 
-   ![image](https://user-images.githubusercontent.com/100102043/155242979-be7ed294-53eb-4afd-98be-fad7232218ae.png)
+   ![image](https://user-images.githubusercontent.com/100102043/159120742-3172967f-911d-46d8-a48f-273dae1747f1.png)
+
 
 * Windows registry [Computer\HKEY_CURRENT_USER\Software\VSTi Driver\Persistence] is used for VSTi settings persistence. Each VSTi settings are stored separately.
 
