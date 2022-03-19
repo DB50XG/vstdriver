@@ -11,16 +11,25 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
    ![image](https://user-images.githubusercontent.com/100102043/158668700-f3b020b7-2adf-4072-aee5-592570b3e8a0.png)
 
-* The loaded VSTi example
+* The driver's VST host with the loaded VSTi.
 
-   ![image](https://user-images.githubusercontent.com/100102043/159120742-3172967f-911d-46d8-a48f-273dae1747f1.png)
+   ![image](https://user-images.githubusercontent.com/100102043/159137233-3626111c-b604-4889-934a-3d8a35c6e149.png)
+   <details>
+   
+   <summary>Comming soon</summary>
+   
+   * *The VST host can be visible in your DAW.*
+   * *The VST host can be minimized.*
+   * *The VSTi Setup works in real time.*
+   
+   </details>
+   
 
-
-* Windows registry [Computer\HKEY_CURRENT_USER\Software\VSTi Driver\Persistence] is used for VSTi settings persistence. Each VSTi settings are stored separately.
+* Each VSTi settings are stored in Windows registry [Computer\HKEY_CURRENT_USER\Software\VSTi Driver\Persistence].
 
    ![image](https://user-images.githubusercontent.com/100102043/155243242-4c409017-0686-4382-828f-9c599fd186ef.png)
 
-* ASIO support via BassAsio and driver mode selector with persistence in windows registry [Computer\HKEY_CURRENT_USER\Software\VSTi Driver\Output Driver].
+* Output drivers & driver mode selectors for ASIO, WASAPI Shared or WASAPI Exclusive.
 
    ![image](https://user-images.githubusercontent.com/100102043/158668867-ffffecbf-453f-4bc9-9315-daff92420b4f.png)
    ![image](https://user-images.githubusercontent.com/100102043/158668801-645df329-d221-4d41-a71d-821c88adeb43.png)
