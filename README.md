@@ -15,8 +15,7 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
    ![image](https://user-images.githubusercontent.com/100102043/159137233-3626111c-b604-4889-934a-3d8a35c6e149.png)
    <details>
-   
-   <summary>Comming soon</summary>
+   <summary>Coming soon</summary>
    
    * *The VST host can be visible in your DAW.*
    * *The VST host can be minimized.*
@@ -25,7 +24,9 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
    </details>
    
 
-* Each VSTi settings are stored in Windows registry [Computer\HKEY_CURRENT_USER\Software\VSTi Driver\Persistence].
+* VSTi settings are stored in Windows registry
+
+   ![image](https://user-images.githubusercontent.com/100102043/159165630-87c02d79-035c-42f5-a779-88079d40d3e7.png)
 
    ![image](https://user-images.githubusercontent.com/100102043/155243242-4c409017-0686-4382-828f-9c599fd186ef.png)
 
