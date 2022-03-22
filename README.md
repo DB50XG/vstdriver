@@ -26,7 +26,7 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
    ![image](https://user-images.githubusercontent.com/100102043/155243242-4c409017-0686-4382-828f-9c599fd186ef.png)
 
-* Output drivers & driver mode selectors for ASIO, WASAPI Shared or WASAPI Exclusive.
+* Output drivers & driver mode selectors for ASIO, WASAPI Shared & WASAPI Exclusive.
 
    ![image](https://user-images.githubusercontent.com/100102043/158668867-ffffecbf-453f-4bc9-9315-daff92420b4f.png)
    ![image](https://user-images.githubusercontent.com/100102043/158668801-645df329-d221-4d41-a71d-821c88adeb43.png)
