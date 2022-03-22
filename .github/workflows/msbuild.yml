@@ -39,6 +39,15 @@ jobs:
     - name: Test date
       run: echo ${{ steps.date.outputs.today }}
       
+    - name: Set version number
+      run: |
+        $version = ${{ steps.date.outputs.today }}+"."(1000+$($Env:GITHUB_RUN_NUMBER))+".0"
+        echo $version
+        echo "VERSION_NUMBER=$version" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf-8 -Append
+        
+    - name: Test version number
+      run: echo ${{ env.VERSION_NUMBER }}
+      
     - name: Print NSIS version
       run: makensis -VERSION
     - name: Print NSIS compile flags
@@ -64,8 +73,8 @@ jobs:
       with:
         draft: false
         prerelease: false
-        tag_name: ${{ steps.date.outputs.today }}.${{ env.GITHUB_RUN_NUMBER }}
-        release_name: Release ${{ steps.date.outputs.today }}.${{ env.GITHUB_RUN_NUMBER }}
+        tag_name: ${{ env.VERSION_NUMBER }}
+        release_name: Release ${{ env.VERSION_NUMBER }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       
