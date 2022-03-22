@@ -15,6 +15,7 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 
    ![image](https://user-images.githubusercontent.com/100102043/159137233-3626111c-b604-4889-934a-3d8a35c6e149.png)
    
+   As shown above:
    * *The VST host is visible when the midi port is in use in your DAW.*
    * *The VST host can be minimized.*
    * *The VSTi Setup works in real time.*
