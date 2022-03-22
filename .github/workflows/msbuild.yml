@@ -64,8 +64,8 @@ jobs:
       with:
         draft: false
         prerelease: false
-        tag_name: ${{ steps.date.outputs.today }}.${{ env.GITHUB_RUN_NUMBER }
-        release_name: Release ${{ steps.date.outputs.today }}.${{ env.GITHUB_RUN_NUMBER }
+        tag_name: ${{ steps.date.outputs.today }}.${{ env.GITHUB_RUN_NUMBER }}
+        release_name: Release ${{ steps.date.outputs.today }}.${{ env.GITHUB_RUN_NUMBER }}
       env:
         GITHUB_TOKEN: ${{ github.token }}
       
