@@ -14,15 +14,10 @@ A Windows user-mode software MIDI synthesizer driver which is capable of using a
 * The driver's VST host with the loaded VSTi.
 
    ![image](https://user-images.githubusercontent.com/100102043/159137233-3626111c-b604-4889-934a-3d8a35c6e149.png)
-   <details>
-   <summary>Coming soon</summary>
    
-   * *The VST host can be visible in your DAW.*
+   * *The VST host is visible in your DAW.*
    * *The VST host can be minimized.*
    * *The VSTi Setup works in real time.*
-   
-   </details>
-   
 
 * VSTi settings are stored in Windows registry
 
