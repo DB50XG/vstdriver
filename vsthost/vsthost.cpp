@@ -460,6 +460,17 @@ LONG __stdcall myExceptFilterProc(LPEXCEPTION_POINTERS param)
     }
 }
 
+#pragma comment(lib, "Winmm")
+
+LPTIMECALLBACK TimeProc(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+{
+    MyDLGTEMPLATE vstiEditor;
+    AEffect* pEffect = (AEffect*)dwUser;
+    vstiEditor.style = WS_POPUPWINDOW | WS_DLGFRAME | WS_MINIMIZEBOX | WS_SYSMENU | WS_CAPTION | DS_MODALFRAME | DS_CENTER;
+    DialogBoxIndirectParam(0, &vstiEditor, 0, (DLGPROC)WindowProc, (LPARAM)pEffect);
+    return 0;
+}
+
 int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow)
 {
     int argc = 0;
@@ -670,10 +681,7 @@ int CALLBACK _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
             {
                 if (pEffect->flags & VstAEffectFlags::effFlagsHasEditor)
                 {
-                    MyDLGTEMPLATE vstiEditor;
-                    vstiEditor.style = WS_POPUPWINDOW | WS_DLGFRAME | DS_MODALFRAME | DS_CENTER;
-                    DialogBoxIndirectParam(0, &vstiEditor, GetDesktopWindow(), (DLGPROC)WindowProc, (LPARAM)(pEffect));
-                    GetChunk(pEffect, chunk);
+                    timeSetEvent(100, 10, (LPTIMECALLBACK)TimeProc, (DWORD)pEffect, TIME_ONESHOT);
                 }
 
                 SendData(0u);

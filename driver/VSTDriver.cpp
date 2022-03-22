@@ -60,7 +60,6 @@ VSTDriver::VSTDriver()
 
 VSTDriver::~VSTDriver()
 {
-	SaveVstiSettings();
 	CloseVSTDriver();
 	delete[] effectName;
 	delete[] vendor;
@@ -649,6 +648,7 @@ long VSTDriver::GetUniqueID()
 
 void VSTDriver::CloseVSTDriver()
 {
+	SaveVstiSettings();
 	process_terminate();
 
 	if (szPluginPath)
@@ -681,6 +681,8 @@ bool VSTDriver::OpenVSTDriver(TCHAR* szPath, uint32_t** error, unsigned int samp
 	}
 
 	LoadVstiSettings();
+
+	DisplayEditorModal();
 
 	//timeSetEvent(1000, 10, (LPTIMECALLBACK)TimeProc, (DWORD)this, TIME_ONESHOT);
 
@@ -761,6 +763,8 @@ bool VSTDriver::SetSampleRate(uint32_t sampleRate)
 
 void VSTDriver::ResetDriver()
 {
+	SaveVstiSettings();
+
 	SendData(Command::Reset);
 
 	if (ReceiveData())

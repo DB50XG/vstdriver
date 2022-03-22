@@ -300,6 +300,7 @@ namespace VSTMIDIDRV
                     LOADBASSASIOFUNCTION(BASS_ASIO_GetRate);
                     LOADBASSASIOFUNCTION(BASS_ASIO_SetRate);
                     LOADBASSASIOFUNCTION(BASS_ASIO_SetNotify);
+                    LOADBASSASIOFUNCTION(BASS_ASIO_ErrorGetCode);
                     LOADBASSASIOFUNCTION(BASS_ASIO_GetDeviceInfo);
                     LOADBASSASIOFUNCTION(BASS_ASIO_ChannelGetInfo);
                     LOADBASSASIOFUNCTION(BASS_ASIO_ChannelJoin);
@@ -317,19 +318,21 @@ namespace VSTMIDIDRV
                 }
             }
 
-            if (!bassAsio)
+            if (bassAsio)
             {
-                // Load Bass
-                bass = LoadLibrary(bassPath);
-
-                if (!bass)
-                {
-                    return false;
-                }
-
-                // Load Bass Wasapi
-                bassWasapi = LoadLibrary(bassWasapiPath);
+                return true;
             }
+
+            // Load Bass
+            bass = LoadLibrary(bassPath);
+
+            if (!bass)
+            {
+                return false;
+            }
+
+            // Load Bass Wasapi
+            bassWasapi = LoadLibrary(bassWasapiPath);
             
             if (bass)
             {
@@ -516,31 +519,36 @@ namespace VSTMIDIDRV
                     return -2;
                 }
 
-                // Set the samplerate
                 BASS_ASIO_SetRate(sampleRate);
+
+                sampleRate = BASS_ASIO_GetRate();
 
                 // Enable 1st output channel
                 BASS_ASIO_ChannelEnable(FALSE, channelId, AsioProc, this);
 
+                soundOutFloat = true;
+
                 // Join the next channel to it (stereo)
                 BASS_ASIO_ChannelJoin(FALSE, channelId + 1, channelId);
 
-                // Set the source format to 16-bit
-                BASS_ASIO_ChannelSetFormat(FALSE, channelId, BASS_ASIO_FORMAT_16BIT);
+                // Set the source format to FLOAT
+                // TODO: autodetect format or add format option in config
+                BASS_ASIO_ChannelSetFormat(FALSE, channelId, BASS_ASIO_FORMAT_FLOAT);
 
                 //BASS_ASIO_SetNotify((ASIONOTIFYPROC*)AsioNotifyProc, this);
             }
             else if (bassWasapi)
             {
                 GetSelectedWasapiDriver(deviceId);
+
+                DWORD wasapiFlags = BASS_WASAPI_AUTOFORMAT;
+                wasapiFlags &= selectedMode.compare(L"WASAPI Shared") == 0 ? BASS_WASAPI_EVENT : BASS_WASAPI_EXCLUSIVE;
                 
-                // WASAPI Shared
-                if (!BASS_WASAPI_Init(deviceId, sampleRate, 2, BASS_WASAPI_EVENT | BASS_WASAPI_AUTOFORMAT, 0, 0, WasapiProc, this))
+                if (!BASS_WASAPI_Init(deviceId, sampleRate, 2, wasapiFlags, 0, 0, WasapiProc, this))
                 {
                     int error = BASS_ErrorGetCode();
                     return -3;
                 }
-                // TODO: WASAPI Exclusive
 
                 BASS_WASAPI_INFO winfo{};
 
@@ -694,7 +702,6 @@ namespace VSTMIDIDRV
             return 0;
         }
 
-        // ASIO function
         static DWORD CALLBACK AsioProc(BOOL input, DWORD channel, void* buffer, DWORD length, void* user) noexcept
         {
             WaveOutWin32* _this = (WaveOutWin32*)user;
